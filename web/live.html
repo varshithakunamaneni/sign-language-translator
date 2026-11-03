@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#0e1117; --card:#1c1f26; --text:#fafafa; --muted:#9aa0a6; --accent:#ff4b4b; --ok:#21c35b; --warn:#ffa421; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Source Sans Pro", system-ui, sans-serif; color:var(--text); background:transparent; }
+  .wrap { display:flex; flex-wrap:wrap; gap:18px; }
+  .left { flex: 1 1 420px; max-width: 680px; }
+  .right { flex: 1 1 300px; }
+  .stage { position:relative; width:100%; aspect-ratio: 4/3; background:#000; border-radius:12px; overflow:hidden; }
+  canvas { width:100%; height:100%; display:block; }
+  .overlay { position:absolute; top:12px; left:14px; text-shadow:0 2px 6px #000; }
+  .big { font-size:84px; font-weight:800; line-height:1; }
+  .conf { font-size:18px; }
+  .bar { width:180px; height:10px; background:#ffffff33; border-radius:6px; margin-top:6px; overflow:hidden; }
+  .bar > div { height:100%; width:0; background:var(--ok); transition: width .05s; }
+  .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:20px; }
+  button, select { font: inherit; color:var(--text); background:var(--card); border:1px solid #ffffff2a; border-radius:8px; padding:9px 14px; cursor:pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); font-weight:700; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .row > * { flex:1 1 auto; }
+  .textbox { font-family: ui-monospace, Menlo, monospace; font-size:40px; min-height:70px; padding:10px 16px; border-radius:10px; background:var(--card); word-break: break-all; }
+  .label { color:var(--muted); font-size:14px; margin:14px 0 6px; }
+  .translated { font-size:30px; margin-top:8px; min-height:40px; }
+  .status { color:var(--muted); font-size:14px; margin-top:8px; }
+  .top3 div { display:flex; justify-content:space-between; font-size:15px; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="stage">
+      <canvas id="canvas" width="640" height="480"></canvas>
+      <div class="overlay" id="overlay" style="display:none">
+        <div class="big" id="letter"></div>
+        <div class="conf" id="conf"></div>
+        <div class="bar"><div id="hold"></div></div>
+      </div>
+      <div class="center" id="startPanel">
+        <div style="font-size:22px">🤟 Live sign translation</div>
+        <div style="color:var(--muted)">Runs fully in your browser. Your video never leaves your device.</div>
+        <button class="primary" id="startBtn">▶ Start camera</button>
+        <div class="status" id="loadStatus"></div>
+      </div>
+    </div>
+    <div class="status">Hold a sign steady ≈1 s to add it · remove hands ≈1.5 s for a space · same letter twice: drop your hand briefly between.</div>
+  </div>
+
+  <div class="right">
+    <div class="label">📝 Text</div>
+    <div class="textbox" id="sentence">&nbsp;</div>
+    <div class="row">
+      <button id="spaceBtn">␣ Space</button>
+      <button id="delBtn">⌫ Delete</button>
+      <button id="clearBtn">🗑️ Clear</button>
+    </div>
+    <div class="label">🔊 Speak in</div>
+    <div class="row">
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="hi">Hindi (हिन्दी)</option>
+        <option value="kn">Kannada (ಕನ್ನಡ)</option>
+        <option value="te">Telugu (తెలుగు)</option>
+      </select>
+      <button class="primary" id="speakBtn">🔊 Speak</button>
+    </div>
+    <div class="translated" id="translated"></div>
+    <div class="status" id="speakStatus"></div>
+    <div class="label">Top predictions</div>
+    <div class="top3" id="top3"></div>
+    <div class="status" id="fps"></div>
+  </div>
+</div>
+
+<script>
+// CORE-START  (pure logic, no browser APIs - unit tested in Node)
+const MODEL = __MODEL_JSON__;
+const DICT = __DICT_JSON__;
+
+const CFG = { CONF: 0.60, WINDOW: 10, AGREE: 0.7, HOLD: 18, NO_HAND_SPACE: 40 };
+
+function normalizeHand(lms) {             // same as _normalize_hand() in src/utils.py
+  const w = lms[0];
+  const pts = lms.map(p => [p.x - w.x, p.y - w.y, p.z - w.z]);
+  let scale = 0;
+  for (const p of pts) for (const v of p) scale = Math.max(scale, Math.abs(v));
+  const out = [];
+  for (const p of pts) for (const v of p) out.push(scale > 0 ? v / scale : v);
+  return out;
+}
+
+function extractFeatures(landmarks, handedness) {   // same as extract_features()
+  let left = new Array(63).fill(0), right = new Array(63).fill(0);
+  for (let i = 0; i < landmarks.length; i++) {
+    const label = handedness[i][0].categoryName;
+    if (label === "Left") left = normalizeHand(landmarks[i]);
+    else right = normalizeHand(landmarks[i]);
+  }
+  return left.concat(right);
+}
+
+function predictProba(x) {               // StandardScaler + MLP (ReLU) + softmax
+  let a = x.map((v, i) => (v - MODEL.mean[i]) / MODEL.scale[i]);
+  MODEL.layers.forEach((L, li) => {
+    const out = L.b.slice();
+    for (let i = 0; i < L.n_in; i++) {
+      const ai = a[i]; if (ai === 0) continue;
+      const row = i * L.n_out;
+      for (let j = 0; j < L.n_out; j++) out[j] += ai * L.W[row + j];
+    }
+    const last = li === MODEL.layers.length - 1;
+    a = last ? out : out.map(v => (v > 0 ? v : 0));
+  });
+  const m = Math.max(...a);
+  const e = a.map(v => Math.exp(v - m));
+  const s = e.reduce((p, c) => p + c, 0);
+  return e.map(v => v / s);
+}
+
+function translate(text, lang) {         // offline dictionary, same as src/translate.py
+  text = text.toLowerCase().trim().split(/\s+/).join(" ");
+  if (!text || lang === "en" || !DICT[lang]) return text;
+  const d = DICT[lang];
+  if (d[text]) return d[text];
+  return text.split(" ").map(w => d[w] || w).join(" ");
+}
+
+function makeSmoother() {                // majority vote + hold-to-accept
+  return { recent: [], stable: null, count: 0, lastAdded: null, noHand: 0 };
+}
+// returns {progress, add} where add is a string to append ("" if nothing)
+function smoothStep(st, letter, conf) {
+  if (letter === null) {                 // no hands
+    st.recent = []; st.stable = null; st.count = 0; st.lastAdded = null;
+    st.noHand++;
+    return { progress: 0, add: st.noHand === CFG.NO_HAND_SPACE ? " " : "" };
+  }
+  st.noHand = 0;
+  st.recent.push(conf >= CFG.CONF ? letter : null);
+  if (st.recent.length > CFG.WINDOW) st.recent.shift();
+  const counts = {};
+  for (const r of st.recent) if (r !== null) counts[r] = (counts[r] || 0) + 1;
+  let vote = null, votes = 0;
+  for (const k in counts) if (counts[k] > votes) { vote = k; votes = counts[k]; }
+  if (vote !== null && votes >= CFG.WINDOW * CFG.AGREE) {
+    if (vote === st.stable) st.count++; else { st.stable = vote; st.count = 1; }
+  } else { st.stable = null; st.count = 0; }
+  let add = "";
+  if (st.stable && st.count === CFG.HOLD && st.stable !== st.lastAdded) {
+    add = st.stable; st.lastAdded = st.stable;
+  }
+  return { progress: st.stable ? Math.min(1, st.count / CFG.HOLD) : 0, add };
+}
+// CORE-END
+</script>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const canvas = $("canvas"), ctx = canvas.getContext("2d");
+const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+let sentence = "";
+const smoother = makeSmoother();
+
+function render() {
+  $("sentence").innerHTML = (sentence.replace(/ /g, "&nbsp;") || "&nbsp;") + '<span style="opacity:.4">_</span>';
+  const lang = $("lang").value;
+  $("translated").textContent = lang === "en" ? "" : translate(sentence, lang);
+}
+$("spaceBtn").onclick = () => { sentence += " "; render(); };
+$("delBtn").onclick = () => { sentence = sentence.slice(0, -1); smoother.lastAdded = null; render(); };
+$("clearBtn").onclick = () => { sentence = ""; smoother.lastAdded = null; render(); };
+$("lang").onchange = render;
+
+// ---- Speech (browser voices) ----
+const LOCALES = { en: "en-IN", hi: "hi-IN", kn: "kn-IN", te: "te-IN" };
+function pickVoice(lang) {
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => v.lang.replace("_", "-").toLowerCase() === LOCALES[lang].toLowerCase())
+      || voices.find(v => v.lang.toLowerCase().startsWith(lang));
+}
+speechSynthesis.onvoiceschanged = () => {};
+$("speakBtn").onclick = () => {
+  const lang = $("lang").value;
+  const text = lang === "en" ? sentence.trim() : translate(sentence, lang);
+  if (!text) { $("speakStatus").textContent = "Nothing to speak yet."; return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = LOCALES[lang];
+  const v = pickVoice(lang);
+  if (v) u.voice = v;
+  $("speakStatus").textContent = v || lang === "en" ? "" :
+    "This device has no voice for this language - showing the translation. (Photo mode below speaks all languages.)";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+};
+
+// ---- Camera + MediaPipe ----
+$("startBtn").onclick = async () => {
+  $("startBtn").disabled = true;
+  try {
+    $("loadStatus").textContent = "Loading hand tracking model…";
+    const { HandLandmarker, FilesetResolver } = await import(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+    const files = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    const landmarker = await HandLandmarker.createFromOptions(files, {
+      baseOptions: { modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task" },
+      runningMode: "VIDEO", numHands: 2,
+      minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    });
+    $("loadStatus").textContent = "Starting camera… (allow camera access)";
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
+    const video = document.createElement("video");
+    video.srcObject = stream; video.playsInline = true; video.muted = true;
+    await video.play();
+    canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+    $("startPanel").style.display = "none";
+    $("overlay").style.display = "block";
+    loop(video, landmarker);
+  } catch (e) {
+    $("startBtn").disabled = false;
+    $("loadStatus").textContent = "Could not start: " + e.message +
+      " — check camera permission (browser address bar) and internet, then try again.";
+  }
+};
+
+let lastTs = -1, frames = 0, fpsT = performance.now();
+function loop(video, landmarker) {
+  // Mirror the frame BEFORE detection - exactly like cv2.flip(frame, 1) during data collection
+  ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  let ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;
+  const res = landmarker.detectForVideo(canvas, ts);
+  const lms = res.landmarks || [];
+  const hand = res.handedness || res.handednesses || [];
+
+  for (const hl of lms) {
+    ctx.strokeStyle = "#00ff66"; ctx.lineWidth = 3;
+    for (const [a, b] of CONNECTIONS) {
+      ctx.beginPath();
+      ctx.moveTo(hl[a].x * canvas.width, hl[a].y * canvas.height);
+      ctx.lineTo(hl[b].x * canvas.width, hl[b].y * canvas.height); ctx.stroke();
+    }
+    ctx.fillStyle = "#ff3355";
+    for (const p of hl) { ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 7); ctx.fill(); }
+  }
+
+  let step;
+  if (lms.length) {
+    const probs = predictProba(extractFeatures(lms, hand));
+    const order = probs.map((p, i) => [p, i]).sort((a, b) => b[0] - a[0]);
+    const letter = MODEL.classes[order[0][1]], conf = order[0][0];
+    step = smoothStep(smoother, letter, conf);
+    const good = conf >= CFG.CONF;
+    $("letter").textContent = letter;
+    $("letter").style.color = good ? "var(--ok)" : "var(--warn)";
+    $("conf").textContent = Math.round(conf * 100) + "%";
+    $("hold").style.width = (step.progress * 100) + "%";
+    $("top3").innerHTML = order.slice(0, 3).map(([p, i]) =>
+      `<div><span>${MODEL.classes[i]}</span><span>${Math.round(p * 100)}%</span></div>`).join("");
+  } else {
+    step = smoothStep(smoother, null, 0);
+    $("letter").textContent = ""; $("conf").textContent = "Show your hand";
+    $("hold").style.width = "0%";
+  }
+  if (step.add) {
+    if (!(step.add === " " && (sentence === "" || sentence.endsWith(" ")))) sentence += step.add;
+    render();
+  }
+
+  frames++;
+  if (ts - fpsT > 1000) { $("fps").textContent = `${frames} fps · model test accuracy ${(MODEL.test_accuracy * 100).toFixed(1)}%`; frames = 0; fpsT = ts; }
+  requestAnimationFrame(() => loop(video, landmarker));
+}
+render();
+</script>
+</body>
+</html>
