@@ -477,6 +477,18 @@ with tab_how:
     for col, (n, t, d) in zip(cols, steps):
         col.markdown(f'<div class="step"><div class="n">{n}</div><h4>{t}</h4><p>{d}</p></div>',
                      unsafe_allow_html=True)
+    st.markdown("### Limitations and responsible use")
+    st.markdown("- **Not a certified interpreter.** It can make mistakes. For medical, legal or emergency situations, "
+                "use a professional ISL interpreter or call **112**.\n"
+                "- **What it knows:** the ISL alphabet A–Z and 15 everyday words. Many ISL signs are not covered yet.\n"
+                "- **New signers:** accuracy is lower for people the model has never seen (about 75% per letter, "
+                "versus 99.8% on our test set). Smoothing and the progress ring help, and a wrong letter can be deleted.\n"
+                "- **Conditions matter:** poor light, cluttered backgrounds, fast movements or hands leaving the frame reduce accuracy. "
+                "Regional ISL variations may not be recognised.\n"
+                "- **Explainable:** the app shows its top-3 guesses with confidence (Translate → Show details, and Photo mode), "
+                "and the Results tab shows exactly where the model gets confused.\n"
+                "- **Privacy:** live mode runs entirely in your browser; video is never uploaded or stored. "
+                "Only hand-point coordinates are used. Our training data contains no names or face images.")
     st.markdown("### Designed for accessibility")
     st.markdown("- **Clear contrast** and big buttons with icons and short words\n"
                 "- **Bigger text** and **high contrast** modes (top right)\n"
@@ -516,4 +528,8 @@ with tab_results:
                  width="stretch")
 
 st.markdown('<div class="footer"><b>SignSpeak</b> · Problem statement FT-04 · Neural Storm 2026 · '
-            'Built with Python, MediaPipe, scikit-learn and Streamlit</div>', unsafe_allow_html=True)
+            'Built with Python, MediaPipe, scikit-learn and Streamlit<br>'
+            '<b>Please note:</b> SignSpeak is a student prototype that helps with everyday communication. '
+            'It can make mistakes and is <b>not a replacement for a certified ISL interpreter</b>. '
+            'In a medical or other emergency, call 112 and do not rely on this app alone.</div>',
+            unsafe_allow_html=True)

@@ -30,29 +30,29 @@
     "Z"
   ],
   "people": [
-    "akshitha",
-    "pranitha",
-    "varshitha"
+    "signer_1",
+    "signer_2",
+    "signer_3"
   ],
   "best_model": "Random Forest",
   "test_split": {
     "Random Forest": {
       "accuracy": 0.9982,
       "macro_f1": 0.9981,
-      "train_time_s": 27.21,
-      "inference_ms_per_sample": 0.013
+      "train_time_s": 27.82,
+      "inference_ms_per_sample": 0.012
     },
     "Neural Network (MLP)": {
       "accuracy": 0.997,
       "macro_f1": 0.9969,
-      "train_time_s": 7.53,
+      "train_time_s": 7.72,
       "inference_ms_per_sample": 0.001
     }
   },
   "unseen_person_accuracy": {
-    "akshitha": 0.7988,
-    "pranitha": 0.7712,
-    "varshitha": 0.6708
+    "signer_1": 0.7712,
+    "signer_2": 0.6708,
+    "signer_3": 0.7988
   },
   "unseen_person_average": 0.7469
 }
