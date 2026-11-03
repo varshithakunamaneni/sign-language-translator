@@ -1,0 +1,56 @@
+{
+  "num_samples": 11254,
+  "num_signs": 26,
+  "signs": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z"
+  ],
+  "people": [
+    "pranitha",
+    "varshitha"
+  ],
+  "best_model": "Random Forest",
+  "test_split": {
+    "Random Forest": {
+      "accuracy": 0.9982,
+      "macro_f1": 0.9982,
+      "train_time_s": 6.22,
+      "inference_ms_per_sample": 0.017
+    },
+    "Neural Network (MLP)": {
+      "accuracy": 0.9982,
+      "macro_f1": 0.9982,
+      "train_time_s": 2.22,
+      "inference_ms_per_sample": 0.001
+    }
+  },
+  "unseen_person_accuracy": {
+    "pranitha": 0.6501,
+    "varshitha": 0.6283
+  },
+  "unseen_person_average": 0.6392
+}

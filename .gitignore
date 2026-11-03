@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+models/hand_landmarker.task
+.DS_Store
+data/landmarks_backup.csv
