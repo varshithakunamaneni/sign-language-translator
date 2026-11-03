@@ -90,7 +90,7 @@ We **recorded our own dataset** with our tools (`collect_data.py`, `collect_word
 | | Letters | Words |
 |---|---|---|
 | Classes | 26 (A–Z) | 14 words + "nothing" |
-| Signers | 3 | our team |
+| Signers | 3 | 1 (so far) |
 | Samples | 16,454 frames | 225 clips of 1.5 s (15 per class) |
 
 ### Letters: model comparison (held-out 20% test set)
@@ -119,7 +119,7 @@ A random split is optimistic, because frames from the same person look alike. So
 |---|---|---|
 | **Random Forest** | **91.1%** | **90.2%** |
 
-8 of the 14 words scored a perfect F1 on the test set, and every word scored at least 0.80. The weakest class is "nothing" (F1 0.50): casual movements are very varied, so we added a **"not signing" check and a Strict sensitivity mode** in the app (see Limitations). Words have far fewer examples than letters (45 test clips), so these numbers are less certain than the letter results.
+8 of the 14 words scored a perfect F1 on the test set, and every word scored at least 0.80. The weakest class is "nothing" (F1 0.50): casual movements are very varied, so we added a **"not signing" check and a Strict sensitivity mode** in the app (see Limitations). Words were recorded by **one signer** so far and have far fewer examples than letters (45 test clips), so these numbers are less certain than the letter results, and accuracy for new signers is expected to be lower until more people record them.
 
 ![Words confusion matrix](assets/words_confusion_matrix.png)
 
@@ -152,7 +152,7 @@ SignSpeak touches health and emergency communication, so we are explicit about w
 - **Not a replacement for a certified ISL interpreter.** It is a prototype that can make mistakes. In medical, legal or emergency situations, use a professional interpreter or call **112**. The app shows this notice on every page.
 - **Limited vocabulary:** ISL A–Z plus 14 words. ISL has 10,000+ signs, and regional variations may not be recognised.
 - **Accuracy for new people is lower** (≈75% per letter on an unseen signer, vs 99.8% on our test split). We report this honestly, reduce its impact with smoothing, confidence thresholds and "Strict" word sensitivity, and let users review and delete text before speaking (Auto-speak is **off** by default).
-- **Small, young dataset:** 3 signers of similar age, recorded indoors. It needs more diverse signers (age, skin tone, hand size, lighting) to be fair to everyone.
+- **Small, young dataset:** 3 signers for letters and 1 for words, of similar age, recorded indoors. It needs more diverse signers (age, skin tone, hand size, lighting) to be fair to everyone.
 - **Conditions:** poor light, busy backgrounds or fast movement reduce accuracy.
 - **Privacy:** live mode runs entirely in the browser, and video is never uploaded or stored. Only hand-point coordinates are used. Signer names in our dataset are replaced with *signer_1…3* (`src/anonymize.py`), and the sign photos are cropped to the hands.
 

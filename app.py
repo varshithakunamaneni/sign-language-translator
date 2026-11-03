@@ -541,9 +541,32 @@ with tab_results:
             for i, (name, acc) in enumerate(per.items(), 1):
                 st.progress(acc, text=f"Signer {i} — {acc:.1%}")
     if os.path.exists(CM_FILE):
-        st.markdown("### Confusion matrix")
+        st.markdown("### Confusion matrix (letters)")
         st.image(CM_FILE, caption="Held-out test set: a darker diagonal means better accuracy",
                  width="stretch")
+
+    # ---- Word signs ----
+    wm_file = os.path.join(ROOT, "assets", "words_metrics.json")
+    if os.path.exists(wm_file):
+        with open(wm_file) as f:
+            wm = json.load(f)
+        wbest = wm.get("best_model")
+        wacc = wm.get("test_split", {}).get(wbest, {}).get("accuracy")
+        st.markdown("### Word signs")
+        n_words = len([w for w in wm.get("words", []) if w != "NOTHING"])
+        st.markdown('<div class="stats">'
+                    + stat("Word accuracy", f"{wacc:.1%}" if wacc else "–", "held-out 20% of clips")
+                    + stat("Words", f"{n_words}", "+ a 'not signing' class")
+                    + stat("Clips", f"{wm.get('num_clips', 0):,}", "1.5 s movement clips")
+                    + "</div>", unsafe_allow_html=True)
+        wtable = pd.DataFrame(wm.get("test_split", {})).T.rename(columns={"accuracy": "Accuracy", "macro_f1": "Macro F1"})
+        for col in ("Accuracy", "Macro F1"):
+            if col in wtable:
+                wtable[col] = wtable[col].map(lambda v: f"{v:.2%}")
+        st.dataframe(wtable, width="stretch")
+        wcm = os.path.join(ROOT, "assets", "words_confusion_matrix.png")
+        if os.path.exists(wcm):
+            st.image(wcm, caption="Word signs: confusion matrix on held-out clips", width="stretch")
 
 st.markdown('<div class="footer"><b>SignSpeak</b> · Problem statement FT-04 · Neural Storm 2026 · '
             'Built with Python, MediaPipe, scikit-learn and Streamlit<br>'
