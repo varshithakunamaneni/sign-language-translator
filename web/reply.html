@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@400;600;700;800&display=swap');
+  /* Night (default) */
+  :root { --bg:#18171B; --card:#201F24; --card2:#2A282F; --line:#3A3740; --text:#F4F2EE; --muted:#B4AFB8;
+          --acc:#F6DBC0; --acc2:#FBE6D1; --on-acc:#2A1A2E; --acc-text:#F6DBC0; --acc-soft:rgba(246,219,192,.14);
+          --focus:#C9A3E0; --fs:1; }
+  /* Day */
+  body.light { --bg:#FAFAF7; --card:#FFFFFF; --card2:#F3F2EF; --line:#E4E2DD; --text:#26222A; --muted:#6B6670;
+               --acc:#935073; --acc2:#A8618A; --on-acc:#FFFFFF; --acc-text:#502D55; --acc-soft:rgba(147,80,115,.13);
+               --focus:#502D55; }
+  body.light .panel { box-shadow:0 1px 2px rgba(20,20,30,.05), 0 4px 14px rgba(20,20,30,.04); }
+  body.hc { --bg:#000; --card:#000; --card2:#111; --line:#FFF; --text:#FFF; --muted:#E5E5E5;
+            --acc:#FFD400; --acc2:#FFE45C; --on-acc:#000; --acc-text:#FFD400; --acc-soft:rgba(255,212,0,.15); --focus:#7DD3FC; }
+  body.large { --fs:1.25; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Nunito", system-ui, sans-serif; color:var(--text); background:transparent;
+         font-size:calc(16px * var(--fs)); line-height:1.45; }
+  svg.i { width:1.25em; height:1.25em; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round;
+          stroke-linejoin:round; vertical-align:-0.25em; flex:0 0 auto; }
+  .intro { font-size:calc(18px * var(--fs)); margin:0 0 14px; color:var(--muted); max-width:760px; }
+  .intro b { color:var(--text); }
+  .wrap { display:flex; flex-wrap:wrap; gap:16px; }
+  .left { flex:1 1 340px; display:flex; flex-direction:column; gap:14px; }
+  .right { flex:2 1 460px; display:flex; flex-direction:column; gap:14px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+           animation:fadeUp .6s ease-out both; }
+  .right .panel { animation-delay:.12s; }
+  .ttl { display:flex; align-items:center; gap:8px; font-weight:700; font-family:"Fraunces", serif;
+         font-size:calc(18px * var(--fs)); margin-bottom:10px; }
+  button, input, select { font:inherit; color:var(--text); }
+  button { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; cursor:pointer;
+           min-height:46px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700;
+           transition:transform .12s, border-color .2s, background .2s; }
+  button:hover { border-color:var(--acc); }
+  button:active { transform:scale(.96); }
+  button:focus-visible, input:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  button.primary { background:var(--acc); color:var(--on-acc); border-color:var(--acc); }
+  .langs { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:12px; }
+  .langs button { min-height:42px; padding:6px 4px; }
+  .langs button[aria-pressed="true"] { background:var(--acc-soft); border:2px solid var(--acc); }
+
+  .mic { width:100%; min-height:110px; border-radius:20px; font-size:calc(22px * var(--fs)); flex-direction:column; gap:6px;
+         background:var(--acc); color:var(--on-acc); border-color:var(--acc); position:relative; }
+  .mic svg.i { width:42px; height:42px; }
+  .mic.listening { animation:ring 1.4s ease-out infinite; }
+  @keyframes ring { 0% { box-shadow:0 0 0 0 var(--acc-soft), 0 0 0 0 var(--acc-soft); }
+                    100% { box-shadow:0 0 0 18px rgba(0,0,0,0), 0 0 0 34px rgba(0,0,0,0); } }
+  .hint { color:var(--muted); font-size:calc(14px * var(--fs)); margin-top:8px; min-height:20px; }
+  .or { text-align:center; color:var(--muted); margin:12px 0 8px; font-weight:700; }
+  .typerow { display:flex; gap:8px; }
+  .typerow input { flex:1; min-height:46px; border-radius:12px; border:1px solid var(--line); background:var(--bg);
+                   padding:0 14px; font-size:calc(17px * var(--fs)); }
+
+  .said { font-family:"Fraunces", serif; font-weight:700; font-size:calc(40px * var(--fs)); line-height:1.2;
+          min-height:56px; word-break:break-word; }
+  .said.empty { font-family:"Nunito", sans-serif; font-weight:600; font-size:calc(20px * var(--fs)); color:var(--muted); }
+  .said .interim { color:var(--muted); }
+  .said.new { animation:fadeUp .45s ease-out; }
+
+  .viewer { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .big { width:calc(220px * var(--fs)); height:calc(220px * var(--fs)); border-radius:18px; background:#131216;
+         border:2px solid var(--line); overflow:hidden; position:relative; display:flex; align-items:center;
+         justify-content:center; flex:0 0 auto; }
+  .big img { width:100%; height:100%; object-fit:cover; }
+  .big .ph { color:#B4AFB8; text-align:center; padding:16px; font-size:calc(15px * var(--fs)); }
+  .big .tag { position:absolute; left:10px; bottom:10px; background:rgba(19,18,22,.85); color:#F6DBC0;
+              font-family:"Fraunces", serif; font-weight:700; font-size:calc(34px * var(--fs)); padding:2px 14px;
+              border-radius:10px; }
+  .big.pop { animation:pop .35s cubic-bezier(.2,.8,.2,1); }
+  .ctrl { display:flex; flex-direction:column; gap:8px; min-width:180px; }
+  .ctrl .now { font-size:calc(15px * var(--fs)); color:var(--muted); }
+  .ctrl .now b { color:var(--text); font-size:calc(20px * var(--fs)); }
+  .speed { display:flex; gap:6px; }
+  .speed button { flex:1; min-height:38px; padding:4px 8px; font-size:calc(14px * var(--fs)); }
+  .speed button[aria-pressed="true"] { background:var(--acc-soft); border:2px solid var(--acc); }
+
+  .words { display:flex; flex-wrap:wrap; gap:14px 22px; margin-top:16px; }
+  .word { display:flex; gap:6px; flex-wrap:wrap; padding:8px; border-radius:14px; border:1px dashed var(--line); }
+  .card { width:calc(74px * var(--fs)); text-align:center; cursor:pointer; border-radius:10px; padding:3px;
+          border:2px solid transparent; transition:border-color .2s, transform .2s; background:none; min-height:0;
+          display:block; }
+  .card img, .card .tile { width:100%; aspect-ratio:1; border-radius:8px; object-fit:cover; display:block; background:#131216; }
+  .card .tile { display:flex; align-items:center; justify-content:center; color:#B4AFB8; font-size:12px; }
+  .card span { display:block; font-weight:800; margin-top:3px; font-size:calc(16px * var(--fs)); }
+  .card.on { border-color:var(--acc); transform:translateY(-4px); }
+  .card { animation:fadeUp .35s ease-out both; }
+  .note { color:var(--muted); font-size:calc(14px * var(--fs)); margin-top:10px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+  @keyframes pop { 0% { transform:scale(.85); opacity:.3; } 70% { transform:scale(1.04); } 100% { transform:scale(1); opacity:1; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body class="__BODY_CLASS__">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 5.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 7.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.2 15a1.5 1.5 0 0 1 2.5-1.7L8 15"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6m4-6v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></symbol>
+</svg>
+
+<p class="intro">For the <b>hearing person</b>: tap the microphone and speak your reply.
+The <b>deaf person</b> reads it here in big letters and sees it in sign language.</p>
+
+<div class="wrap">
+  <div class="left">
+    <div class="panel">
+      <div class="ttl"><svg class="i"><use href="#i-mic"/></svg>Your reply</div>
+      <div class="langs" role="group" aria-label="Language you will speak">
+        <button data-lang="en-IN" aria-pressed="true">English</button>
+        <button data-lang="hi-IN" aria-pressed="false" lang="hi">हिन्दी</button>
+        <button data-lang="kn-IN" aria-pressed="false" lang="kn">ಕನ್ನಡ</button>
+        <button data-lang="te-IN" aria-pressed="false" lang="te">తెలుగు</button>
+      </div>
+      <button class="mic" id="micBtn" aria-label="Tap and speak">
+        <svg class="i" id="micIcon"><use href="#i-mic"/></svg><span id="micLbl">Tap and speak</span>
+      </button>
+      <div class="hint" id="micHint" role="status" aria-live="polite"></div>
+      <div class="or">or type it</div>
+      <div class="typerow">
+        <input id="typed" placeholder="Where is the pain?" aria-label="Type your reply">
+        <button class="primary" id="showBtn">Show</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <div class="ttl"><svg class="i"><use href="#i-text"/></svg>They said</div>
+      <div class="said empty" id="said" aria-live="polite">The reply will appear here in big letters.</div>
+    </div>
+    <div class="panel">
+      <div class="ttl"><svg class="i"><use href="#i-hand"/></svg>In sign language</div>
+      <div class="viewer">
+        <div class="big" id="big"><div class="ph">Signs will play here, one letter at a time.</div></div>
+        <div class="ctrl">
+          <button class="primary" id="playBtn"><svg class="i" id="playIcon"><use href="#i-play"/></svg><span id="playLbl">Play signs</span></button>
+          <div class="speed" role="group" aria-label="Speed">
+            <button data-ms="1300" aria-pressed="false">Slow</button>
+            <button data-ms="850" aria-pressed="true">Normal</button>
+            <button data-ms="550" aria-pressed="false">Fast</button>
+          </div>
+          <button id="clearBtn"><svg class="i"><use href="#i-trash"/></svg>Clear</button>
+          <div class="now" id="now"></div>
+        </div>
+      </div>
+      <div class="words" id="words"></div>
+      <div class="note" id="note"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SIGNS = __SIGNS_JSON__;   // { "A": "data:image/jpeg;base64,...", ... }
+const $ = id => document.getElementById(id);
+let recLang = "en-IN", speed = 850, letters = [], playing = false, timer = null, idx = -1;
+
+// ---- Follow the page's Day / Night theme ----
+function syncTheme() {
+  try {
+    const m = getComputedStyle(window.parent.document.querySelector(".stApp")).backgroundColor.match(/\d+/g).map(Number);
+    document.body.classList.toggle("light", (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) > 140);
+  } catch (e) {}
+}
+syncTheme(); setInterval(syncTheme, 500);
+
+// ---- Show a reply ----
+function bigShow(letter) {
+  const big = $("big");
+  big.innerHTML = SIGNS[letter]
+    ? `<img src="${SIGNS[letter]}" alt="Sign for ${letter}"><div class="tag">${letter}</div>`
+    : `<div class="ph">No photo for <b>${letter}</b> yet</div><div class="tag">${letter}</div>`;
+  big.classList.remove("pop"); void big.offsetWidth; big.classList.add("pop");
+}
+function showReply(text, interim) {
+  const said = $("said");
+  if (!text.trim() && !interim) { said.className = "said empty"; said.textContent = "The reply will appear here in big letters."; return; }
+  said.className = "said new";
+  said.innerHTML = text + (interim ? ` <span class="interim">${interim}</span>` : "");
+  if (interim) return;
+  stop();
+  // Sign pictures: only for English letters A-Z
+  letters = []; const box = $("words"); box.innerHTML = "";
+  const words = text.toUpperCase().split(/\s+/).map(w => w.replace(/[^A-Z]/g, "")).filter(Boolean);
+  let n = 0;
+  words.forEach((w, wi) => {
+    const wd = document.createElement("div"); wd.className = "word";
+    [...w].forEach(ch => {
+      const i = letters.length; letters.push({ ch, wordEnd: false });
+      const c = document.createElement("button"); c.className = "card"; c.style.animationDelay = (n++ * 0.03) + "s";
+      c.setAttribute("aria-label", "Sign for " + ch);
+      c.innerHTML = (SIGNS[ch] ? `<img src="${SIGNS[ch]}" alt="">` : `<div class="tile">no photo</div>`) + `<span>${ch}</span>`;
+      c.onclick = () => { stop(); highlight(i); bigShow(ch); };
+      wd.appendChild(c);
+    });
+    if (letters.length) letters[letters.length - 1].wordEnd = true;
+    box.appendChild(wd);
+  });
+  const missing = [...new Set(letters.map(l => l.ch).filter(c => !SIGNS[c]))];
+  $("note").textContent = !words.length && text.trim()
+    ? "Sign pictures are shown for English words. Choose English above to see the signs."
+    : (missing.length ? `No photo yet for: ${missing.join(", ")}` : "");
+  if (letters.length) setTimeout(play, 400);   // start playing automatically
+}
+function highlight(i) {
+  document.querySelectorAll(".card").forEach((c, k) => c.classList.toggle("on", k === i));
+  idx = i;
+  const cur = letters[i];
+  $("now").innerHTML = cur ? `Now showing: <b>${cur.ch}</b> (${i + 1} of ${letters.length})` : "";
+}
+function step() {
+  if (idx + 1 >= letters.length) { stop(); highlight(-1); return; }
+  highlight(idx + 1); bigShow(letters[idx].ch);
+  timer = setTimeout(step, letters[idx].wordEnd ? speed + 600 : speed);   // small pause between words
+}
+function play() {
+  if (!letters.length) return;
+  if (playing) { stop(); return; }
+  playing = true; $("playLbl").textContent = "Stop"; $("playIcon").innerHTML = '<use href="#i-stop"/>'; idx = -1; step();
+}
+function stop() { playing = false; clearTimeout(timer); $("playLbl").textContent = "Play signs"; $("playIcon").innerHTML = '<use href="#i-play"/>'; }
+$("playBtn").onclick = play;
+$("clearBtn").onclick = () => { stop(); letters = []; $("words").innerHTML = ""; $("note").textContent = ""; $("now").textContent = "";
+  $("big").innerHTML = '<div class="ph">Signs will play here, one letter at a time.</div>'; showReply(""); $("typed").value = ""; };
+document.querySelectorAll(".speed button").forEach(b => b.onclick = () => {
+  speed = +b.dataset.ms; document.querySelectorAll(".speed button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+document.querySelectorAll(".langs button").forEach(b => b.onclick = () => {
+  recLang = b.dataset.lang; document.querySelectorAll(".langs button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+
+// ---- Typing ----
+$("showBtn").onclick = () => showReply($("typed").value);
+$("typed").addEventListener("keydown", e => { if (e.key === "Enter") showReply($("typed").value); });
+
+// ---- Microphone (browser speech recognition) ----
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+if (!SR) {
+  $("micHint").textContent = "This browser can't listen. Please type instead (Chrome and Safari can listen).";
+  $("micBtn").style.opacity = .55;
+}
+$("micBtn").onclick = () => {
+  if (!SR) { $("typed").focus(); return; }
+  if (listening) { rec.stop(); return; }
+  rec = new SR(); rec.lang = recLang; rec.interimResults = true; rec.continuous = false;
+  let finalText = "";
+  rec.onstart = () => { listening = true; $("micBtn").classList.add("listening"); $("micLbl").textContent = "Listening… tap to stop";
+                        $("micIcon").innerHTML = '<use href="#i-stop"/>'; $("micHint").textContent = "Speak now."; };
+  rec.onresult = e => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
+    }
+    showReply(finalText, interim);
+  };
+  rec.onerror = e => { $("micHint").textContent = e.error === "not-allowed"
+      ? "Microphone is blocked. Allow it in the browser address bar, or type instead."
+      : "Couldn't hear clearly. Try again, or type instead."; };
+  rec.onend = () => { listening = false; $("micBtn").classList.remove("listening"); $("micLbl").textContent = "Tap and speak";
+                      $("micIcon").innerHTML = '<use href="#i-mic"/>';
+                      if (finalText.trim()) { $("micHint").textContent = ""; showReply(finalText); } };
+  rec.start();
+};
+</script>
+</body>
+</html>

@@ -27,6 +27,8 @@ METRICS_FILE = os.path.join(ROOT, "assets", "metrics.json")
 CM_FILE = os.path.join(ROOT, "assets", "confusion_matrix.png")
 WEB_MODEL_FILE = os.path.join(ROOT, "models", "web_model.json")
 LIVE_HTML_FILE = os.path.join(ROOT, "web", "live.html")
+REPLY_HTML_FILE = os.path.join(ROOT, "web", "reply.html")
+SIGNS_DIR = os.path.join(ROOT, "web", "signs")
 
 LANGUAGES = {  # name -> (gTTS language code, translation code)
     "English": ("en", None),
@@ -172,6 +174,30 @@ def live_page(body_class):
     return (html.replace("__MODEL_JSON__", model_json)
                 .replace("__DICT_JSON__", json.dumps(DICTIONARY, ensure_ascii=False))
                 .replace("__BODY_CLASS__", body_class))
+
+
+@st.cache_data
+def reply_page(body_class, signs_stamp):
+    """Reply page: the ISL letter photos (web/signs/A.jpg ...) are built into the page."""
+    import base64
+    signs = {}
+    if os.path.isdir(SIGNS_DIR):
+        for name in sorted(os.listdir(SIGNS_DIR)):
+            letter, ext = os.path.splitext(name)
+            if ext.lower() in (".jpg", ".jpeg", ".png") and len(letter) == 1 and letter.isalpha():
+                with open(os.path.join(SIGNS_DIR, name), "rb") as f:
+                    mime = "png" if ext.lower() == ".png" else "jpeg"
+                    signs[letter.upper()] = f"data:image/{mime};base64," + base64.b64encode(f.read()).decode()
+    with open(REPLY_HTML_FILE, encoding="utf-8") as f:
+        html = f.read()
+    return html.replace("__SIGNS_JSON__", json.dumps(signs)).replace("__BODY_CLASS__", body_class)
+
+
+def signs_stamp():
+    """Changes whenever sign photos are added/updated, so the page refreshes."""
+    if not os.path.isdir(SIGNS_DIR):
+        return ""
+    return ",".join(f"{n}:{os.path.getmtime(os.path.join(SIGNS_DIR, n)):.0f}" for n in sorted(os.listdir(SIGNS_DIR)))
 
 
 def load_metrics():
@@ -323,8 +349,8 @@ st.markdown('<div class="facts">'
             + fact("4", "languages it speaks")
             + "</div>", unsafe_allow_html=True)
 
-tab_live, tab_photo, tab_how, tab_results = st.tabs(
-    ["Translate", "Photo mode", "How it works", "Results"])
+tab_live, tab_reply, tab_photo, tab_how, tab_results = st.tabs(
+    ["Translate", "Reply", "Photo mode", "How it works", "Results"])
 
 # ---------------- Live ----------------
 with tab_live:
@@ -333,7 +359,13 @@ with tab_live:
     if page is None:
         st.warning("Live mode needs models/web_model.json. Run: python src/export_web_model.py")
     else:
-        embed(page, 920 if LARGE else 820)
+        has_phrases = "Quick phrases" in page          # taller page when quick phrases are included
+        embed(page, (1450 if has_phrases else 920) if LARGE else (1180 if has_phrases else 820))
+
+# ---------------- Reply (hearing person -> deaf person) ----------------
+with tab_reply:
+    body_class = " ".join(c for c, on in (("large", LARGE), ("hc", HC)) if on)
+    embed(reply_page(body_class, signs_stamp()), 1250 if LARGE else 1050)
 
 # ---------------- Photo mode ----------------
 with tab_photo:
