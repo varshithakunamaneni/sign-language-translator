@@ -480,7 +480,7 @@ with tab_how:
     st.markdown("### Limitations and responsible use")
     st.markdown("- **Not a certified interpreter.** It can make mistakes. For medical, legal or emergency situations, "
                 "use a professional ISL interpreter or call **112**.\n"
-                "- **What it knows:** the ISL alphabet A–Z and 15 everyday words. Many ISL signs are not covered yet.\n"
+                "- **What it knows:** the ISL alphabet A–Z and 14 everyday words. Many ISL signs are not covered yet.\n"
                 "- **New signers:** accuracy is lower for people the model has never seen (about 75% per letter, "
                 "versus 99.8% on our test set). Smoothing and the progress ring help, and a wrong letter can be deleted.\n"
                 "- **Conditions matter:** poor light, cluttered backgrounds, fast movements or hands leaving the frame reduce accuracy. "

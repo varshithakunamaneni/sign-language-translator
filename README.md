@@ -4,7 +4,7 @@
 **Track:** Track 1 · Future Tech (Intelligent Systems & Emerging Technology)
 **Hackathon:** Neural Storm 2026
 
-🔗 **Live demo:** [TEAM: paste your Streamlit link, e.g. https://signspeak-isl.streamlit.app]
+🔗 **Live demo:** **https://signspeak-isl.streamlit.app**
 🎬 **Demo video:** [TEAM: paste your video link]
 
 ![SignSpeak demo](assets/screenshots/demo.gif)
@@ -13,14 +13,13 @@
 
 ## 👥 Team
 
-**Team name:** [TEAM: your team name]
+**Team name:** Tech Forge
 
 | Member | Role |
 |---|---|
-| Varshitha [TEAM: full name] | [TEAM: role] |
-| Pranitha [TEAM: full name] | [TEAM: role] |
-| Akshitha [TEAM: full name] | [TEAM: role] |
-| [TEAM: add / remove rows] | |
+| Parasureddy Praneetha | Equal contribution: ISL data collection, model training and evaluation, web app development, testing and documentation |
+| Kunamaneni Sai Varshitha | Equal contribution: ISL data collection, model training and evaluation, web app development, testing and documentation |
+| Karna Akshitha | Equal contribution: ISL data collection, model training and evaluation, web app development, testing and documentation |
 
 ---
 
@@ -42,7 +41,7 @@ Everyday moments become hard: explaining pain to a doctor, asking for help in an
 ### ✨ Features
 - 🔴 **Real-time translation in the browser.** Hand tracking and our trained models run on the user's device: fast, private (video never leaves the device), and works on phones.
 - ✋ **Letters mode:** the full ISL alphabet A–Z, including **two-handed** letters.
-- 👋 **Words mode:** 15 whole-word gestures (HELLO, THANK YOU, PLEASE, YES, NO, HELP, DOCTOR, PAIN, WATER, FOOD, TOILET, WHERE, FAMILY, NAME, DEAF), recognised from **hand movement over time**.
+- 👋 **Words mode:** 14 whole-word gestures (HELLO, THANK YOU, PLEASE, YES, NO, HELP, DOCTOR, PAIN, WATER, TOILET, WHERE, FAMILY, NAME, DEAF), recognised from **hand movement over time**.
 - 💬 **Reply tab (two-way conversation):** speech-to-text with large captions and an **ISL sign slideshow** built from photos of our team signing each letter.
 - 🔊 **Speech in 4 languages** with an **offline dictionary**, so common and emergency words translate even without internet.
 - ⚡ **Auto-speak** (optional): speaks each word as soon as it is finished.
@@ -89,9 +88,9 @@ We **recorded our own dataset** with our tools (`collect_data.py`, `collect_word
 
 | | Letters | Words |
 |---|---|---|
-| Classes | 26 (A–Z) | 15 words + "nothing" |
-| Signers | 3 | [TEAM: number] |
-| Samples | 16,454 frames | [TEAM: number from train_words.py] clips |
+| Classes | 26 (A–Z) | 14 words + "nothing" |
+| Signers | 3 | our team |
+| Samples | 16,454 frames | 225 clips of 1.5 s (15 per class) |
 
 ### Letters: model comparison (held-out 20% test set)
 
@@ -115,12 +114,11 @@ A random split is optimistic, because frames from the same person look alike. So
 
 ### Words (held-out test set)
 
-| Model | Accuracy |
-|---|---|
-| **Random Forest** | **91.1%** |
-| Unseen-signer accuracy | [TEAM: from train_words.py, if 2+ signers] |
+| Model | Accuracy | Macro F1 |
+|---|---|---|
+| **Random Forest** | **91.1%** | **90.2%** |
 
-11 of 15 words scored a perfect F1 on the test set.
+8 of the 14 words scored a perfect F1 on the test set, and every word scored at least 0.80. The weakest class is "nothing" (F1 0.50): casual movements are very varied, so we added a **"not signing" check and a Strict sensitivity mode** in the app (see Limitations). Words have far fewer examples than letters (45 test clips), so these numbers are less certain than the letter results.
 
 ![Words confusion matrix](assets/words_confusion_matrix.png)
 
@@ -131,10 +129,10 @@ Measured with `python src/benchmark.py` on our laptop:
 
 | Step | Time |
 |---|---|
-| Hand tracking (MediaPipe, one 640×480 frame) | [TEAM: from benchmark.py] ms |
-| Letter model in the browser (one frame) | [TEAM] ms |
-| Word model in the browser (one 10-frame clip) | [TEAM] ms |
-| **Live app speed** (Translate → Show details) | [TEAM: e.g. 25–30] frames per second |
+| Hand tracking (MediaPipe, one 640×480 frame, Python) | 33.8 ms |
+| Letter model in the browser (one frame) | 0.5 ms |
+| Word model in the browser (one 10-frame clip) | 6.8 ms |
+| **Live app speed** (Translate → Show details) | **46 frames per second** |
 
 So recognition runs in **real time** on an ordinary laptop, with no GPU and no server.
 
@@ -151,7 +149,7 @@ So recognition runs in **real time** on an ordinary laptop, with no GPU and no s
 ## ⚠️ Limitations & responsible AI
 SignSpeak touches health and emergency communication, so we are explicit about what it can and can't do:
 - **Not a replacement for a certified ISL interpreter.** It is a prototype that can make mistakes. In medical, legal or emergency situations, use a professional interpreter or call **112**. The app shows this notice on every page.
-- **Limited vocabulary:** ISL A–Z plus 15 words. ISL has 10,000+ signs, and regional variations may not be recognised.
+- **Limited vocabulary:** ISL A–Z plus 14 words. ISL has 10,000+ signs, and regional variations may not be recognised.
 - **Accuracy for new people is lower** (≈75% per letter on an unseen signer, vs 99.8% on our test split). We report this honestly, reduce its impact with smoothing, confidence thresholds and "Strict" word sensitivity, and let users review and delete text before speaking (Auto-speak is **off** by default).
 - **Small, young dataset:** 3 signers of similar age, recorded indoors. It needs more diverse signers (age, skin tone, hand size, lighting) to be fair to everyone.
 - **Conditions:** poor light, busy backgrounds or fast movement reduce accuracy.
@@ -281,7 +279,7 @@ python src/capture_signs.py
 ---
 
 ## 🤖 Disclosure of AI tools used
-As required by the hackathon rules: we used **Claude (by Anthropic)** as an AI assistant during development, for project planning, code generation, debugging, UI design and drafting this README. All data collection (letters, words and sign photos), model training, testing, evaluation, tuning and integration were done by our team during the hackathon. [TEAM: add any other AI tools you used.]
+As required by the hackathon rules: we used **Claude (by Anthropic)** as an AI assistant during development, for project planning, code generation, debugging, UI design and drafting this README. All data collection (letters, words and sign photos), model training, testing, evaluation, tuning and integration were done by our team during the hackathon. No other AI tools were used.
 
 ## 📄 License
 MIT. See [LICENSE](LICENSE).

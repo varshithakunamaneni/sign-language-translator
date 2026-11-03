@@ -11,3 +11,9 @@ primaryColor = "#F6DBC0"
 backgroundColor = "#18171B"
 secondaryBackgroundColor = "#222126"
 textColor = "#F4F2EE"
+
+[server]
+# Photo uploads / camera snapshots fail with "403" on Streamlit Cloud in some browsers
+# (e.g. Safari) because of this check. Our app has no logins or private data, so it is safe to turn off.
+enableXsrfProtection = false
+maxUploadSize = 10
