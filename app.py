@@ -258,6 +258,20 @@ def add_text(s):
     st.session_state.sentence += s
 
 
+def show_alphabet():
+    """Grid of our team's photos of each ISL letter, so anyone can try the demo."""
+    st.caption("New to Indian Sign Language? Copy these signs in front of the camera. Start with an easy word like HI.")
+    files = sorted(f for f in os.listdir(SIGNS_DIR) if f[0].isalpha() and f.lower().endswith((".jpg", ".png"))) \
+        if os.path.isdir(SIGNS_DIR) else []
+    if not files:
+        st.info("Sign photos not added yet (run: python src/capture_signs.py).")
+        return
+    for i in range(0, len(files), 9):
+        cols = st.columns(9)
+        for col, name in zip(cols, files[i:i + 9]):
+            col.image(os.path.join(SIGNS_DIR, name), caption=os.path.splitext(name)[0].upper(), width="stretch")
+
+
 # ---------------- Header ----------------
 def embed(html, height):
     """Show our own HTML (live translator, Day/Night switch). Uses st.iframe on new
@@ -360,6 +374,8 @@ tab_live, tab_reply, tab_photo, tab_how, tab_results = st.tabs(
 
 # ---------------- Live ----------------
 with tab_live:
+    with st.expander("Don't know ISL? Show the alphabet"):
+        show_alphabet()
     body_class = " ".join(c for c, on in (("large", LARGE), ("hc", HC)) if on)
     stamp = "".join(f"{os.path.getmtime(f):.0f}" for f in (WEB_MODEL_FILE, WORDS_MODEL_FILE, LIVE_HTML_FILE)
                     if os.path.exists(f))
@@ -477,6 +493,8 @@ with tab_how:
     for col, (n, t, d) in zip(cols, steps):
         col.markdown(f'<div class="step"><div class="n">{n}</div><h4>{t}</h4><p>{d}</p></div>',
                      unsafe_allow_html=True)
+    st.markdown("### ISL alphabet guide")
+    show_alphabet()
     st.markdown("### Limitations and responsible use")
     st.markdown("- **Not a certified interpreter.** It can make mistakes. For medical, legal or emergency situations, "
                 "use a professional ISL interpreter or call **112**.\n"

@@ -6,6 +6,7 @@
 
 🔗 **Live demo:** **https://signspeak-isl.streamlit.app**
 🎬 **Demo video:** [TEAM: paste your video link]
+✋ **Don't know ISL?** Use our [alphabet chart](#-try-it-yourself-isl-alphabet) to try the live demo.
 
 ![SignSpeak demo](assets/screenshots/demo.gif)
 
@@ -255,6 +256,17 @@ python src/train_words.py
 # letter photos for the Reply tab
 python src/capture_signs.py
 ```
+
+---
+
+## ✋ Try it yourself: ISL alphabet
+Don't know ISL? Copy these signs (photographed by our team) in front of the camera on the **Translate** tab. Start with an easy word like **HI**. You can also type any word in the **Reply** tab to see it signed letter by letter.
+
+|   |   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|---|
+| <img src="web/signs/A.jpg" width="72" alt="ISL sign for A"><br><b>A</b> | <img src="web/signs/B.jpg" width="72" alt="ISL sign for B"><br><b>B</b> | <img src="web/signs/C.jpg" width="72" alt="ISL sign for C"><br><b>C</b> | <img src="web/signs/D.jpg" width="72" alt="ISL sign for D"><br><b>D</b> | <img src="web/signs/E.jpg" width="72" alt="ISL sign for E"><br><b>E</b> | <img src="web/signs/F.jpg" width="72" alt="ISL sign for F"><br><b>F</b> | <img src="web/signs/G.jpg" width="72" alt="ISL sign for G"><br><b>G</b> | <img src="web/signs/H.jpg" width="72" alt="ISL sign for H"><br><b>H</b> | <img src="web/signs/I.jpg" width="72" alt="ISL sign for I"><br><b>I</b> |
+| <img src="web/signs/J.jpg" width="72" alt="ISL sign for J"><br><b>J</b> | <img src="web/signs/K.jpg" width="72" alt="ISL sign for K"><br><b>K</b> | <img src="web/signs/L.jpg" width="72" alt="ISL sign for L"><br><b>L</b> | <img src="web/signs/M.jpg" width="72" alt="ISL sign for M"><br><b>M</b> | <img src="web/signs/N.jpg" width="72" alt="ISL sign for N"><br><b>N</b> | <img src="web/signs/O.jpg" width="72" alt="ISL sign for O"><br><b>O</b> | <img src="web/signs/P.jpg" width="72" alt="ISL sign for P"><br><b>P</b> | <img src="web/signs/Q.jpg" width="72" alt="ISL sign for Q"><br><b>Q</b> | <img src="web/signs/R.jpg" width="72" alt="ISL sign for R"><br><b>R</b> |
+| <img src="web/signs/S.jpg" width="72" alt="ISL sign for S"><br><b>S</b> | <img src="web/signs/T.jpg" width="72" alt="ISL sign for T"><br><b>T</b> | <img src="web/signs/U.jpg" width="72" alt="ISL sign for U"><br><b>U</b> | <img src="web/signs/V.jpg" width="72" alt="ISL sign for V"><br><b>V</b> | <img src="web/signs/W.jpg" width="72" alt="ISL sign for W"><br><b>W</b> | <img src="web/signs/X.jpg" width="72" alt="ISL sign for X"><br><b>X</b> | <img src="web/signs/Y.jpg" width="72" alt="ISL sign for Y"><br><b>Y</b> | <img src="web/signs/Z.jpg" width="72" alt="ISL sign for Z"><br><b>Z</b> |
 
 ---
 
