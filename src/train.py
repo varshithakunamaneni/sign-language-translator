@@ -40,18 +40,31 @@ MODEL_FILE = os.path.join(ROOT, "models", "sign_model.joblib")
 ASSETS = os.path.join(ROOT, "assets")
 
 
-def augment(X, y, copies=2, seed=42):
-    """Create extra training samples with small random noise + scaling.
-    Helps the model handle slightly different hands/positions."""
+def mirror(X):
+    """Mirror image of each sample = the same sign made by a LEFT-handed person.
+    Swap the left/right hand blocks and flip the x coordinates."""
+    Xm = np.concatenate([X[:, 63:], X[:, :63]], axis=1).copy()
+    Xm[:, 0::3] *= -1          # x values are at positions 0, 3, 6, ...
+    return Xm
+
+
+def augment(X, y, copies=2, seed=42, with_mirror=True):
+    """Create extra training samples:
+    - small random noise + size changes (different hands / distances)
+    - mirrored copies (left-handed signers)"""
     rng = np.random.default_rng(seed)
-    Xs, ys = [X], [y]
+    base_X, base_y = X, y
+    if with_mirror:
+        base_X = np.vstack([X, mirror(X)])
+        base_y = np.concatenate([y, y])
+    Xs, ys = [base_X], [base_y]
     for _ in range(copies):
-        noise = rng.normal(0, 0.02, X.shape).astype(np.float32)
-        scale = rng.uniform(0.9, 1.1, (X.shape[0], 1)).astype(np.float32)
-        Xa = (X + noise) * scale
-        Xa[X == 0] = 0  # keep "missing hand" zeros as zeros
+        noise = rng.normal(0, 0.02, base_X.shape).astype(np.float32)
+        scale = rng.uniform(0.9, 1.1, (base_X.shape[0], 1)).astype(np.float32)
+        Xa = (base_X + noise) * scale
+        Xa[base_X == 0] = 0  # keep "missing hand" zeros as zeros
         Xs.append(Xa)
-        ys.append(y)
+        ys.append(base_y)
     return np.vstack(Xs), np.concatenate(ys)
 
 

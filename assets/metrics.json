@@ -1,5 +1,5 @@
 {
-  "num_samples": 11254,
+  "num_samples": 16454,
   "num_signs": 26,
   "signs": [
     "A",
@@ -30,6 +30,7 @@
     "Z"
   ],
   "people": [
+    "akshitha",
     "pranitha",
     "varshitha"
   ],
@@ -37,20 +38,21 @@
   "test_split": {
     "Random Forest": {
       "accuracy": 0.9982,
-      "macro_f1": 0.9982,
-      "train_time_s": 6.22,
-      "inference_ms_per_sample": 0.017
+      "macro_f1": 0.9981,
+      "train_time_s": 27.21,
+      "inference_ms_per_sample": 0.013
     },
     "Neural Network (MLP)": {
-      "accuracy": 0.9982,
-      "macro_f1": 0.9982,
-      "train_time_s": 2.22,
+      "accuracy": 0.997,
+      "macro_f1": 0.9969,
+      "train_time_s": 7.53,
       "inference_ms_per_sample": 0.001
     }
   },
   "unseen_person_accuracy": {
-    "pranitha": 0.6501,
-    "varshitha": 0.6283
+    "akshitha": 0.7988,
+    "pranitha": 0.7712,
+    "varshitha": 0.6708
   },
-  "unseen_person_average": 0.6392
+  "unseen_person_average": 0.7469
 }

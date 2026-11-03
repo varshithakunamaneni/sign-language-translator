@@ -1,3 +1,13 @@
-[theme]
-base = "dark"
-primaryColor = "#ff4b4b"
+# Calm neutral backgrounds; Violet Dusk (#502D55 #935073 #F6DBC0) used only as accents.
+# Day = [theme.light], Night = [theme.dark] (switch with the Day / Night buttons in the app)
+[theme.light]
+primaryColor = "#935073"
+backgroundColor = "#FAFAF7"
+secondaryBackgroundColor = "#F1F0EC"
+textColor = "#26222A"
+
+[theme.dark]
+primaryColor = "#F6DBC0"
+backgroundColor = "#18171B"
+secondaryBackgroundColor = "#222126"
+textColor = "#F4F2EE"

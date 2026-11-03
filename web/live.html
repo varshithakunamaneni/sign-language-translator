@@ -1,80 +1,232 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
-  :root { --bg:#0e1117; --card:#1c1f26; --text:#fafafa; --muted:#9aa0a6; --accent:#ff4b4b; --ok:#21c35b; --warn:#ffa421; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: "Source Sans Pro", system-ui, sans-serif; color:var(--text); background:transparent; }
-  .wrap { display:flex; flex-wrap:wrap; gap:18px; }
-  .left { flex: 1 1 420px; max-width: 680px; }
-  .right { flex: 1 1 300px; }
-  .stage { position:relative; width:100%; aspect-ratio: 4/3; background:#000; border-radius:12px; overflow:hidden; }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@400;600;700;800&display=swap');
+  /* Violet Dusk - Night (default) */
+  :root { --bg:#18171B; --card:#201F24; --card2:#2A282F; --line:#3A3740; --text:#F4F2EE; --muted:#B4AFB8;
+          --acc:#F6DBC0; --acc2:#FBE6D1; --on-acc:#2A1A2E; --acc-text:#F6DBC0; --acc-soft:rgba(246,219,192,.14);
+          --blue:#C9A3E0; --fs:1; }
+  /* Violet Dusk - Day */
+  body.light { --bg:#FAFAF7; --card:#FFFFFF; --card2:#F3F2EF; --line:#E4E2DD; --text:#26222A; --muted:#6B6670;
+               --acc:#935073; --acc2:#A8618A; --on-acc:#FFFFFF; --acc-text:#502D55; --acc-soft:rgba(147,80,115,.13);
+               --blue:#502D55; }
+  body.light .panel, body.light .step { box-shadow:0 1px 2px rgba(20,20,30,.05), 0 4px 14px rgba(20,20,30,.04); }
+  body.hc { --bg:#000; --card:#000; --card2:#111; --line:#FFFFFF; --text:#FFFFFF; --muted:#E5E5E5;
+            --acc:#FFD400; --acc2:#FFE45C; --on-acc:#000; --acc-text:#FFD400; --acc-soft:rgba(255,212,0,.15); --blue:#7DD3FC; }
+  body.large { --fs:1.25; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Nunito", system-ui, -apple-system, sans-serif; color:var(--text);
+         background:transparent; font-size:calc(16px * var(--fs)); line-height:1.45; }
+  svg.i { width:1.25em; height:1.25em; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round;
+          stroke-linejoin:round; vertical-align:-0.25em; flex:0 0 auto; }
+
+  /* ---------- 1-2-3 guide ---------- */
+  .steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px; }
+  .step { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px;
+          background:var(--card); border:1px solid var(--line); color:var(--muted);
+          transition:border-color .3s, color .3s, transform .3s; }
+  .step .num { width:calc(36px * var(--fs)); height:calc(36px * var(--fs)); border-radius:50%;
+               display:flex; align-items:center; justify-content:center; font-weight:800;
+               background:var(--card2); border:1px solid var(--line); transition:all .3s; }
+  .step .t { font-weight:700; font-size:calc(16px * var(--fs)); }
+  .step.active { border-color:var(--acc); color:var(--text); transform:translateY(-2px); }
+  .step.active .num { background:var(--acc); color:var(--on-acc); border-color:var(--acc); }
+  .step.done .num { color:var(--acc-text); border-color:var(--acc); }
+
+  .wrap { display:flex; flex-wrap:wrap; gap:16px; }
+  .left { flex:1 1 440px; max-width:700px; }
+  .right { flex:1 1 320px; display:flex; flex-direction:column; gap:14px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; }
+  .ttl { display:flex; align-items:center; gap:8px; color:var(--text); font-weight:700; font-family:"Fraunces", serif;
+         font-size:calc(18px * var(--fs)); margin-bottom:10px; }
+
+  /* ---------- camera ---------- */
+  .stage { --text:#F4F2EE; --muted:#B4AFB8; --card2:#2A282F; --line:#46424C; --acc:#F6DBC0; --acc2:#FBE6D1;
+           --on-acc:#2A1A2E; color:var(--text);
+           position:relative; width:100%; aspect-ratio:4/3; background:#131216; border-radius:16px;
+           overflow:hidden; border:2px solid var(--line); transition:border-color .25s; }
+  .stage.flash { border-color:var(--acc); }
   canvas { width:100%; height:100%; display:block; }
-  .overlay { position:absolute; top:12px; left:14px; text-shadow:0 2px 6px #000; }
-  .big { font-size:84px; font-weight:800; line-height:1; }
-  .conf { font-size:18px; }
-  .bar { width:180px; height:10px; background:#ffffff33; border-radius:6px; margin-top:6px; overflow:hidden; }
-  .bar > div { height:100%; width:0; background:var(--ok); transition: width .05s; }
-  .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:20px; }
-  button, select { font: inherit; color:var(--text); background:var(--card); border:1px solid #ffffff2a; border-radius:8px; padding:9px 14px; cursor:pointer; }
-  button:hover { border-color: var(--accent); }
-  button.primary { background:var(--accent); border-color:var(--accent); font-weight:700; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-  .row > * { flex:1 1 auto; }
-  .textbox { font-family: ui-monospace, Menlo, monospace; font-size:40px; min-height:70px; padding:10px 16px; border-radius:10px; background:var(--card); word-break: break-all; }
-  .label { color:var(--muted); font-size:14px; margin:14px 0 6px; }
-  .translated { font-size:30px; margin-top:8px; min-height:40px; }
-  .status { color:var(--muted); font-size:14px; margin-top:8px; }
-  .top3 div { display:flex; justify-content:space-between; font-size:15px; margin-top:4px; }
+  .ring { position:absolute; top:14px; left:14px; width:calc(118px * var(--fs)); height:calc(118px * var(--fs)); }
+  .ring svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+  .ring circle { fill:rgba(19,18,22,.85); stroke:var(--line); stroke-width:7; }
+  body.hc .ring circle { fill:#000; }
+  .ring circle.p { fill:none; stroke:var(--acc); stroke-dasharray:283; stroke-dashoffset:283;
+                   transition:stroke-dashoffset .08s linear; }
+  .ring .letter { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                  font-size:calc(58px * var(--fs)); font-weight:700; color:var(--acc2); font-family:"Fraunces", serif; }
+  .ring .letter.low { color:var(--muted); }
+  .chip { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:flex; align-items:center;
+          gap:8px; padding:8px 16px; border-radius:999px; background:rgba(19,18,22,.9); border:1px solid var(--line);
+          font-weight:700; font-size:calc(16px * var(--fs)); white-space:nowrap; transition:border-color .25s, color .25s; }
+  body.hc .chip { background:#000; }
+  .chip.good { border-color:var(--acc); color:var(--acc2); }
+  .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:14px; text-align:center; padding:24px; }
+  .bigicon { width:84px; height:84px; border-radius:24px; background:var(--card2); border:1px solid var(--line);
+             display:flex; align-items:center; justify-content:center; color:var(--acc); }
+  .bigicon svg.i { width:44px; height:44px; }
+
+  /* ---------- controls ---------- */
+  button { font:inherit; color:var(--text); background:var(--card2); border:1px solid var(--line); border-radius:12px;
+           padding:10px 14px; cursor:pointer; min-height:48px; display:inline-flex; align-items:center;
+           justify-content:center; gap:8px; font-weight:600; transition:transform .12s, border-color .2s, background .2s; }
+  button:hover { border-color:var(--acc); }
+  button:active { transform:scale(.96); }
+  button:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+  button.primary { background:var(--acc); color:var(--on-acc); border-color:var(--acc); font-weight:800; }
+  button.primary:hover { background:var(--acc2); }
+  button.xl { font-size:calc(19px * var(--fs)); padding:14px 26px; min-height:58px; border-radius:16px; }
+  .pulse { animation:pulse 2.2s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(246,219,192,.5); } 70% { box-shadow:0 0 0 16px rgba(246,219,192,0); } 100% { box-shadow:0 0 0 0 rgba(246,219,192,0); } }
+  .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:12px; }
+  .langs { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
+  .langs button { min-height:46px; padding:8px 4px; font-size:calc(16px * var(--fs)); }
+  .langs button[aria-pressed="true"] { background:var(--acc-soft); border:2px solid var(--acc); color:var(--text); }
+  .speak { width:100%; margin-top:12px; }
+
+  .textbox { font-family:"Nunito", sans-serif; font-weight:800; letter-spacing:.06em; font-size:calc(40px * var(--fs)); min-height:84px;
+             padding:12px 16px; border-radius:12px; background:var(--bg); border:2px solid var(--line);
+             word-break:break-all; transition:border-color .25s, background .25s; }
+  .textbox.flash { border-color:var(--acc); background:var(--acc-soft); }
+  .textbox .new { display:inline-block; animation:pop .35s ease-out; color:var(--acc-text); }
+  .textbox .ph { color:var(--muted); font-family:inherit; font-size:calc(20px * var(--fs)); }
+  .cursor { color:var(--acc-text); animation:blink 1s steps(1) infinite; }
+  .translated { font-size:calc(30px * var(--fs)); margin-top:10px; color:var(--acc-text); font-weight:700; }
+  .translated:not(:empty) { animation:fade .3s ease-out; }
+  .status { color:var(--muted); font-size:calc(15px * var(--fs)); margin-top:8px; min-height:22px; }
+
+  details { margin-top:4px; }
+  summary { cursor:pointer; color:var(--muted); font-weight:600; padding:6px 0; }
+  .top3 div { display:grid; grid-template-columns:32px 1fr 46px; gap:8px; align-items:center; margin-top:8px; }
+  .top3 .tb { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .top3 .tb > i { display:block; height:100%; background:var(--blue); transition:width .15s; }
+  .tips { display:flex; flex-wrap:wrap; gap:8px 18px; color:var(--muted); font-size:calc(14px * var(--fs)); margin-top:12px; }
+  .tips span { display:flex; align-items:center; gap:6px; }
+  kbd { background:var(--card2); border:1px solid var(--line); border-radius:5px; padding:0 6px; font-size:.9em; }
+
+  @keyframes fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.15); } 100% { transform:scale(1); opacity:1; } }
+  @keyframes blink { 50% { opacity:0; } }
+  .letter.popped { animation:pop .3s ease-out; }
+
+  /* ===== Clear, visible animations ===== */
+  .fade { animation:fadeUp .7s cubic-bezier(.2,.8,.2,1) both; }
+  .fade.d1 { animation-delay:.15s; } .fade.d2 { animation-delay:.3s; } .fade.d3 { animation-delay:.45s; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(24px) scale(.98); } to { opacity:1; transform:none; } }
+  .step { animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) both; }
+  #s2 { animation-delay:.1s; } #s3 { animation-delay:.2s; }
+  .step.active { box-shadow:0 0 0 3px var(--acc-soft); }
+  .step.active .num { animation:bounce 2.4s ease-in-out infinite; }
+  @keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+  .step.done .num { animation:popIn .45s ease-out; }
+  .wave { display:inline-block; transform-origin:70% 90%; animation:wave 2.4s ease-in-out infinite; }
+  @keyframes wave { 0%,60%,100% { transform:rotate(0); } 10%,30% { transform:rotate(-16deg); } 20%,40% { transform:rotate(12deg); } }
+  .toast { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); pointer-events:none;
+           font-size:calc(120px * var(--fs)); font-weight:700; font-family:"Fraunces", serif; color:var(--acc2); opacity:0;
+           text-shadow:0 6px 30px rgba(0,0,0,.6); }
+  .toast.show { animation:toast .9s cubic-bezier(.2,.8,.2,1); }
+  @keyframes toast { 0% { opacity:0; transform:translate(-50%,-50%) scale(.3); }
+                     30% { opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+                     60% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+                     100% { opacity:0; transform:translate(10%,-140%) scale(.4); } }
+  .ring.full svg { animation:glow .6s ease-out; }
+  @keyframes glow { 0% { filter:drop-shadow(0 0 0 var(--acc)); } 50% { filter:drop-shadow(0 0 14px var(--acc)); } 100% { filter:none; } }
+  .textbox .new { animation:popIn .5s cubic-bezier(.2,.8,.2,1); }
+  @keyframes popIn { 0% { transform:scale(.2) translateY(-20px); opacity:0; } 60% { transform:scale(1.35); opacity:1; } 100% { transform:scale(1); } }
+  .chip { animation:chipIn .35s ease-out; }
+  @keyframes chipIn { from { transform:translate(-50%, 16px); opacity:0; } to { transform:translateX(-50%); opacity:1; } }
+  .langs button[aria-pressed="true"] { animation:popIn .35s ease-out; }
+  .bars { display:none; gap:3px; align-items:flex-end; height:18px; }
+  .speaking .bars { display:inline-flex; }
+  .bars i { width:4px; background:currentColor; border-radius:2px; animation:eq .8s ease-in-out infinite; }
+  .bars i:nth-child(2) { animation-delay:.15s; } .bars i:nth-child(3) { animation-delay:.3s; } .bars i:nth-child(4) { animation-delay:.45s; }
+  @keyframes eq { 0%,100% { height:4px; } 50% { height:18px; } }
+  button.speaking { box-shadow:0 0 0 6px var(--acc-soft); }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+  @media (max-width:560px) { .steps { grid-template-columns:1fr; } .langs { grid-template-columns:repeat(2, 1fr); } }
 </style>
 </head>
-<body>
+<body class="__BODY_CLASS__">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 5.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 7.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.2 15a1.5 1.5 0 0 1 2.5-1.7L8 15"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M5 9h3l5-4v14l-5-4H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+  <symbol id="i-space" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 6H9l-6 6 6 6h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"/><path d="M12 10l4 4m0-4l-4 4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6m4-6v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M5 12H2m20 0h-3"/><circle cx="12" cy="12" r="4"/></symbol>
+</svg>
+
+<div class="steps fade" aria-label="How to use">
+  <div class="step active" id="s1"><div class="num" id="n1">1</div><svg class="i"><use href="#i-camera"/></svg><div class="t">Start camera</div></div>
+  <div class="step" id="s2"><div class="num" id="n2">2</div><svg class="i"><use href="#i-hand"/></svg><div class="t">Show a sign</div></div>
+  <div class="step" id="s3"><div class="num" id="n3">3</div><svg class="i"><use href="#i-speaker"/></svg><div class="t">Press Speak</div></div>
+</div>
+
 <div class="wrap">
-  <div class="left">
-    <div class="stage">
-      <canvas id="canvas" width="640" height="480"></canvas>
-      <div class="overlay" id="overlay" style="display:none">
-        <div class="big" id="letter"></div>
-        <div class="conf" id="conf"></div>
-        <div class="bar"><div id="hold"></div></div>
+  <div class="left fade d1">
+    <div class="stage" id="stage">
+      <canvas id="canvas" width="640" height="480" aria-label="Camera view"></canvas>
+      <div class="ring" id="ring" style="display:none" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45"/><circle class="p" id="ringP" cx="50" cy="50" r="45"/></svg>
+        <div class="letter" id="letter"></div>
       </div>
+      <div class="toast" id="toast" aria-hidden="true"></div>
+      <div class="chip" id="chip" style="display:none" role="status" aria-live="polite"></div>
       <div class="center" id="startPanel">
-        <div style="font-size:22px">🤟 Live sign translation</div>
-        <div style="color:var(--muted)">Runs fully in your browser. Your video never leaves your device.</div>
-        <button class="primary" id="startBtn">▶ Start camera</button>
-        <div class="status" id="loadStatus"></div>
+        <div class="bigicon" aria-hidden="true"><span class="wave"><svg class="i"><use href="#i-hand"/></svg></span></div>
+        <div style="font-size:calc(26px * var(--fs)); font-weight:700; font-family:'Fraunces', serif">Talk with your hands</div>
+        <div style="color:var(--muted); max-width:380px">Show sign language to the camera. We write the words and say them out loud.</div>
+        <button class="primary xl pulse" id="startBtn"><svg class="i"><use href="#i-camera"/></svg>Start camera</button>
+        <div style="color:var(--muted); font-size:calc(14px * var(--fs)); display:flex; gap:6px; align-items:center">
+          <svg class="i"><use href="#i-lock"/></svg>Your video stays on this device</div>
+        <div class="status" id="loadStatus" role="status" aria-live="polite"></div>
       </div>
     </div>
-    <div class="status">Hold a sign steady ≈1 s to add it · remove hands ≈1.5 s for a space · same letter twice: drop your hand briefly between.</div>
+    <div class="tips">
+      <span><svg class="i"><use href="#i-hand"/></svg>Hold each sign still until the circle fills</span>
+      <span><svg class="i"><use href="#i-pause"/></svg>Hands down for a moment = new word</span>
+      <span><svg class="i"><use href="#i-sun"/></svg>Good light helps</span>
+    </div>
   </div>
 
   <div class="right">
-    <div class="label">📝 Text</div>
-    <div class="textbox" id="sentence">&nbsp;</div>
-    <div class="row">
-      <button id="spaceBtn">␣ Space</button>
-      <button id="delBtn">⌫ Delete</button>
-      <button id="clearBtn">🗑️ Clear</button>
+    <div class="panel fade d2">
+      <div class="ttl" id="textLabel"><svg class="i"><use href="#i-text"/></svg>Your words</div>
+      <div class="textbox" id="sentence" role="log" aria-live="polite" aria-labelledby="textLabel"></div>
+      <div class="row">
+        <button id="spaceBtn" aria-label="Add space"><svg class="i"><use href="#i-space"/></svg>Space</button>
+        <button id="delBtn" aria-label="Delete last letter"><svg class="i"><use href="#i-back"/></svg>Delete</button>
+        <button id="clearBtn" aria-label="Clear all"><svg class="i"><use href="#i-trash"/></svg>Clear</button>
+      </div>
     </div>
-    <div class="label">🔊 Speak in</div>
-    <div class="row">
-      <select id="lang">
-        <option value="en">English</option>
-        <option value="hi">Hindi (हिन्दी)</option>
-        <option value="kn">Kannada (ಕನ್ನಡ)</option>
-        <option value="te">Telugu (తెలుగు)</option>
-      </select>
-      <button class="primary" id="speakBtn">🔊 Speak</button>
+    <div class="panel fade d3">
+      <div class="ttl"><svg class="i"><use href="#i-speaker"/></svg>Speak in</div>
+      <div class="langs" role="group" aria-label="Speech language">
+        <button data-lang="en" aria-pressed="true">English</button>
+        <button data-lang="hi" aria-pressed="false" lang="hi">हिन्दी</button>
+        <button data-lang="kn" aria-pressed="false" lang="kn">ಕನ್ನಡ</button>
+        <button data-lang="te" aria-pressed="false" lang="te">తెలుగు</button>
+      </div>
+      <div class="translated" id="translated" aria-live="polite"></div>
+      <button class="primary xl speak" id="speakBtn"><svg class="i"><use href="#i-speaker"/></svg><span id="speakLbl">Speak</span><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+      <div class="status" id="speakStatus" role="status" aria-live="polite"></div>
+      <details>
+        <summary>Show details</summary>
+        <div class="top3" id="top3"><div style="display:block;color:var(--muted)">Start the camera to see the top 3 guesses.</div></div>
+        <div class="status" id="fps"></div>
+        <div class="status">Keys: <kbd>Enter</kbd> speak · <kbd>Space</kbd> space · <kbd>Backspace</kbd> delete · <kbd>C</kbd> clear</div>
+      </details>
     </div>
-    <div class="translated" id="translated"></div>
-    <div class="status" id="speakStatus"></div>
-    <div class="label">Top predictions</div>
-    <div class="top3" id="top3"></div>
-    <div class="status" id="fps"></div>
   </div>
 </div>
-
 <script>
 // CORE-START  (pure logic, no browser APIs - unit tested in Node)
 const MODEL = __MODEL_JSON__;
@@ -156,52 +308,123 @@ function smoothStep(st, letter, conf) {
 }
 // CORE-END
 </script>
-
 <script type="module">
 const $ = id => document.getElementById(id);
 const canvas = $("canvas"), ctx = canvas.getContext("2d");
 const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
   [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-let sentence = "";
+const RING = 283;
+let sentence = "", lang = "en", started = false, lastNew = -1;
 const smoother = makeSmoother();
 
-function render() {
-  $("sentence").innerHTML = (sentence.replace(/ /g, "&nbsp;") || "&nbsp;") + '<span style="opacity:.4">_</span>';
-  const lang = $("lang").value;
-  $("translated").textContent = lang === "en" ? "" : translate(sentence, lang);
+// ---- Follow the page's Day / Night theme ----
+function syncTheme() {
+  try {
+    const app = window.parent.document.querySelector(".stApp");
+    const m = getComputedStyle(app).backgroundColor.match(/\d+/g).map(Number);
+    const light = (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) > 140;
+    document.body.classList.toggle("light", light);
+  } catch (e) { /* not inside Streamlit: keep night colours */ }
 }
-$("spaceBtn").onclick = () => { sentence += " "; render(); };
-$("delBtn").onclick = () => { sentence = sentence.slice(0, -1); smoother.lastAdded = null; render(); };
-$("clearBtn").onclick = () => { sentence = ""; smoother.lastAdded = null; render(); };
-$("lang").onchange = render;
+syncTheme(); setInterval(syncTheme, 500);
+
+// ---- 1-2-3 guide: highlights the step the user is on ----
+function setStep() {
+  const cur = !started ? 1 : (sentence.trim() ? 3 : 2);
+  [1, 2, 3].forEach(n => {
+    $("s" + n).classList.toggle("active", n === cur);
+    $("s" + n).classList.toggle("done", n < cur);
+    $("n" + n).textContent = n < cur ? "✓" : n;
+  });
+}
+
+// ---- Text ----
+function esc(c) { return c === " " ? "&nbsp;" : c; }
+function render() {
+  if (!sentence) {
+    $("sentence").innerHTML = '<span class="ph">Your words will appear here</span>';
+  } else {
+    const chars = [...sentence].map((c, i) => i === lastNew ? `<span class="new">${esc(c)}</span>` : esc(c)).join("");
+    $("sentence").innerHTML = chars + '<span class="cursor" aria-hidden="true">▍</span>';
+  }
+  $("translated").textContent = lang === "en" ? "" : translate(sentence, lang);
+  setStep();
+}
+let flashTimer;
+function flash() {                       // visual feedback instead of a sound (for deaf users)
+  $("sentence").classList.add("flash"); $("stage").classList.add("flash");
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { $("sentence").classList.remove("flash"); $("stage").classList.remove("flash"); }, 600);
+}
+function addChar(c) {
+  sentence += c; lastNew = sentence.length - 1; flash(); render();
+  if (c !== " ") {                       // big letter jumps up from the video into the text box
+    const t = $("toast"); t.textContent = c;
+    t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+    $("ring").classList.remove("full"); void $("ring").offsetWidth; $("ring").classList.add("full");
+  }
+}
+window.__signspeakDemo = addChar;         // used only for automated UI tests
+function addSpace() { if (sentence && !sentence.endsWith(" ")) addChar(" "); }
+function del() { sentence = sentence.slice(0, -1); lastNew = -1; smoother.lastAdded = null; render(); }
+function clearAll() { sentence = ""; lastNew = -1; smoother.lastAdded = null; $("speakStatus").textContent = ""; render(); }
+$("spaceBtn").onclick = addSpace; $("delBtn").onclick = del; $("clearBtn").onclick = clearAll;
+document.querySelectorAll(".langs button").forEach(b => b.onclick = () => {
+  lang = b.dataset.lang;
+  document.querySelectorAll(".langs button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
 
 // ---- Speech (browser voices) ----
 const LOCALES = { en: "en-IN", hi: "hi-IN", kn: "kn-IN", te: "te-IN" };
-function pickVoice(lang) {
+function pickVoice(l) {
   const voices = speechSynthesis.getVoices();
-  return voices.find(v => v.lang.replace("_", "-").toLowerCase() === LOCALES[lang].toLowerCase())
-      || voices.find(v => v.lang.toLowerCase().startsWith(lang));
+  return voices.find(v => v.lang.replace("_", "-").toLowerCase() === LOCALES[l].toLowerCase())
+      || voices.find(v => v.lang.toLowerCase().startsWith(l));
 }
 speechSynthesis.onvoiceschanged = () => {};
-$("speakBtn").onclick = () => {
-  const lang = $("lang").value;
+function speak() {
   const text = lang === "en" ? sentence.trim() : translate(sentence, lang);
-  if (!text) { $("speakStatus").textContent = "Nothing to speak yet."; return; }
+  if (!text) { $("speakStatus").textContent = "Show some signs first."; return; }
   const u = new SpeechSynthesisUtterance(text);
   u.lang = LOCALES[lang];
   const v = pickVoice(lang);
   if (v) u.voice = v;
-  $("speakStatus").textContent = v || lang === "en" ? "" :
-    "This device has no voice for this language - showing the translation. (Photo mode below speaks all languages.)";
+  $("speakStatus").textContent = (v || lang === "en") ? "" :
+    "This device has no voice for this language. The words are shown above. Photo mode can speak it.";
+  const btn = $("speakBtn");
+  btn.classList.add("speaking"); $("speakLbl").textContent = "Speaking";
+  const done = () => { btn.classList.remove("speaking"); $("speakLbl").textContent = "Speak"; };
+  u.onend = done; u.onerror = done; setTimeout(done, 15000);
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
-};
+}
+$("speakBtn").onclick = speak;
+
+// ---- Keyboard shortcuts ----
+document.addEventListener("keydown", e => {
+  if (["SELECT", "INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
+  if (e.target.tagName === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;
+  if (e.key === "Enter") { e.preventDefault(); speak(); }
+  else if (e.key === " ") { e.preventDefault(); addSpace(); }
+  else if (e.key === "Backspace") { e.preventDefault(); del(); }
+  else if (e.key.toLowerCase() === "c") { clearAll(); }
+});
+
+// ---- Status chip under the video ----
+let lastChip = "";
+function chip(html, good) {
+  if (html === lastChip) return;
+  lastChip = html; const c = $("chip");
+  c.innerHTML = html; c.classList.toggle("good", !!good);
+  c.style.animation = "none"; void c.offsetWidth; c.style.animation = "";
+}
 
 // ---- Camera + MediaPipe ----
 $("startBtn").onclick = async () => {
-  $("startBtn").disabled = true;
+  $("startBtn").disabled = true; $("startBtn").classList.remove("pulse");
   try {
-    $("loadStatus").textContent = "Loading hand tracking model…";
+    $("loadStatus").textContent = "Getting ready… (a few seconds)";
     const { HandLandmarker, FilesetResolver } = await import(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
     const files = await FilesetResolver.forVisionTasks(
@@ -212,23 +435,23 @@ $("startBtn").onclick = async () => {
       runningMode: "VIDEO", numHands: 2,
       minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
     });
-    $("loadStatus").textContent = "Starting camera… (allow camera access)";
+    $("loadStatus").textContent = "Please allow the camera.";
     const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
     const video = document.createElement("video");
     video.srcObject = stream; video.playsInline = true; video.muted = true;
     await video.play();
     canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
     $("startPanel").style.display = "none";
-    $("overlay").style.display = "block";
+    $("ring").style.display = "block"; $("chip").style.display = "flex";
+    started = true; render();
     loop(video, landmarker);
   } catch (e) {
-    $("startBtn").disabled = false;
-    $("loadStatus").textContent = "Could not start: " + e.message +
-      " — check camera permission (browser address bar) and internet, then try again.";
+    $("startBtn").disabled = false; $("startBtn").classList.add("pulse");
+    $("loadStatus").textContent = "Camera did not start. Allow the camera in the browser bar and check the internet, then try again.";
   }
 };
 
-let lastTs = -1, frames = 0, fpsT = performance.now();
+let lastTs = -1, frames = 0, fpsT = performance.now(), shownLetter = "";
 function loop(video, landmarker) {
   // Mirror the frame BEFORE detection - exactly like cv2.flip(frame, 1) during data collection
   ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
@@ -239,15 +462,16 @@ function loop(video, landmarker) {
   const res = landmarker.detectForVideo(canvas, ts);
   const lms = res.landmarks || [];
   const hand = res.handedness || res.handednesses || [];
+  const hc = document.body.classList.contains("hc");
 
   for (const hl of lms) {
-    ctx.strokeStyle = "#00ff66"; ctx.lineWidth = 3;
+    ctx.strokeStyle = hc ? "#FFD400" : "#F6DBC0"; ctx.lineWidth = 3;
     for (const [a, b] of CONNECTIONS) {
       ctx.beginPath();
       ctx.moveTo(hl[a].x * canvas.width, hl[a].y * canvas.height);
       ctx.lineTo(hl[b].x * canvas.width, hl[b].y * canvas.height); ctx.stroke();
     }
-    ctx.fillStyle = "#ff3355";
+    ctx.fillStyle = hc ? "#FFFFFF" : "#E7A3C3";
     for (const p of hl) { ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 7); ctx.fill(); }
   }
 
@@ -258,24 +482,28 @@ function loop(video, landmarker) {
     const letter = MODEL.classes[order[0][1]], conf = order[0][0];
     step = smoothStep(smoother, letter, conf);
     const good = conf >= CFG.CONF;
+    if (letter !== shownLetter) {        // small "pop" when the guess changes
+      $("letter").classList.remove("popped"); void $("letter").offsetWidth; $("letter").classList.add("popped");
+      shownLetter = letter;
+    }
     $("letter").textContent = letter;
-    $("letter").style.color = good ? "var(--ok)" : "var(--warn)";
-    $("conf").textContent = Math.round(conf * 100) + "%";
-    $("hold").style.width = (step.progress * 100) + "%";
+    $("letter").classList.toggle("low", !good);
+    $("ringP").style.strokeDashoffset = RING * (1 - step.progress);
+    if (!good) chip("Not sure. Try again, clearly");
+    else if (step.progress < 1) chip(`Hold still… <b>${letter}</b>`);
+    else chip(`<svg class="i"><use href="#i-check"/></svg> Got it: ${letter}`, true);
     $("top3").innerHTML = order.slice(0, 3).map(([p, i]) =>
-      `<div><span>${MODEL.classes[i]}</span><span>${Math.round(p * 100)}%</span></div>`).join("");
+      `<div><b>${MODEL.classes[i]}</b><span class="tb"><i style="width:${Math.round(p * 100)}%"></i></span><span>${Math.round(p * 100)}%</span></div>`).join("");
   } else {
     step = smoothStep(smoother, null, 0);
-    $("letter").textContent = ""; $("conf").textContent = "Show your hand";
-    $("hold").style.width = "0%";
+    $("letter").textContent = ""; shownLetter = "";
+    $("ringP").style.strokeDashoffset = RING;
+    chip(`<svg class="i"><use href="#i-hand"/></svg> Show your hand`);
   }
-  if (step.add) {
-    if (!(step.add === " " && (sentence === "" || sentence.endsWith(" ")))) sentence += step.add;
-    render();
-  }
+  if (step.add) { if (step.add === " ") addSpace(); else addChar(step.add); }
 
   frames++;
-  if (ts - fpsT > 1000) { $("fps").textContent = `${frames} fps · model test accuracy ${(MODEL.test_accuracy * 100).toFixed(1)}%`; frames = 0; fpsT = ts; }
+  if (ts - fpsT > 1000) { $("fps").textContent = `Speed: ${frames} frames per second · model accuracy ${(MODEL.test_accuracy * 100).toFixed(1)}%`; frames = 0; fpsT = ts; }
   requestAnimationFrame(() => loop(video, landmarker));
 }
 render();
