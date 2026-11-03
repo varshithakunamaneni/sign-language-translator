@@ -1,0 +1,36 @@
+{
+  "num_clips": 225,
+  "words": [
+    "DEAF",
+    "DOCTOR",
+    "FAMILY",
+    "HELLO",
+    "HELP",
+    "NAME",
+    "NO",
+    "NOTHING",
+    "PAIN",
+    "PLEASE",
+    "THANK YOU",
+    "TOILET",
+    "WATER",
+    "WHERE",
+    "YES"
+  ],
+  "people": [
+    "akshitha"
+  ],
+  "best_model": "Random Forest",
+  "test_split": {
+    "Random Forest": {
+      "accuracy": 0.9111,
+      "macro_f1": 0.9019
+    },
+    "Neural Network (MLP)": {
+      "accuracy": 0.9111,
+      "macro_f1": 0.9019
+    }
+  },
+  "unseen_person_accuracy": {},
+  "unseen_person_average": null
+}

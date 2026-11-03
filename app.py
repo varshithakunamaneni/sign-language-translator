@@ -27,6 +27,7 @@ METRICS_FILE = os.path.join(ROOT, "assets", "metrics.json")
 CM_FILE = os.path.join(ROOT, "assets", "confusion_matrix.png")
 WEB_MODEL_FILE = os.path.join(ROOT, "models", "web_model.json")
 LIVE_HTML_FILE = os.path.join(ROOT, "web", "live.html")
+WORDS_MODEL_FILE = os.path.join(ROOT, "models", "words_web_model.json")
 REPLY_HTML_FILE = os.path.join(ROOT, "web", "reply.html")
 SIGNS_DIR = os.path.join(ROOT, "web", "signs")
 
@@ -162,7 +163,7 @@ def get_model():
 
 
 @st.cache_data
-def live_page(body_class):
+def live_page(body_class, stamp=""):
     """Real-time page: our model weights + dictionary injected into web/live.html."""
     if not os.path.exists(WEB_MODEL_FILE):
         return None
@@ -171,7 +172,12 @@ def live_page(body_class):
         html = f.read()
     with open(WEB_MODEL_FILE) as f:
         model_json = f.read()
+    words_json = "null"                       # word-sign model is optional
+    if os.path.exists(WORDS_MODEL_FILE):
+        with open(WORDS_MODEL_FILE) as f:
+            words_json = f.read()
     return (html.replace("__MODEL_JSON__", model_json)
+                .replace("__WORDS_JSON__", words_json)
                 .replace("__DICT_JSON__", json.dumps(DICTIONARY, ensure_ascii=False))
                 .replace("__BODY_CLASS__", body_class))
 
@@ -355,7 +361,9 @@ tab_live, tab_reply, tab_photo, tab_how, tab_results = st.tabs(
 # ---------------- Live ----------------
 with tab_live:
     body_class = " ".join(c for c, on in (("large", LARGE), ("hc", HC)) if on)
-    page = live_page(body_class)
+    stamp = "".join(f"{os.path.getmtime(f):.0f}" for f in (WEB_MODEL_FILE, WORDS_MODEL_FILE, LIVE_HTML_FILE)
+                    if os.path.exists(f))
+    page = live_page(body_class, stamp)
     if page is None:
         st.warning("Live mode needs models/web_model.json. Run: python src/export_web_model.py")
     else:
@@ -365,7 +373,7 @@ with tab_live:
 # ---------------- Reply (hearing person -> deaf person) ----------------
 with tab_reply:
     body_class = " ".join(c for c, on in (("large", LARGE), ("hc", HC)) if on)
-    embed(reply_page(body_class, signs_stamp()), 1250 if LARGE else 1050)
+    embed(reply_page(body_class, signs_stamp() + f"{os.path.getmtime(REPLY_HTML_FILE):.0f}"), 1250 if LARGE else 1050)
 
 # ---------------- Photo mode ----------------
 with tab_photo:

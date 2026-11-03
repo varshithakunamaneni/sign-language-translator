@@ -98,6 +98,42 @@ def extract_features(result):
     return np.concatenate([left, right]), len(result.hand_landmarks)
 
 
+# ---------------- Word signs (movement over time) ----------------
+# For words, WHERE the hand is and HOW it moves matters too (e.g. a wave, a hand moving
+# to the chin). So each frame gets 6 extra values: for each hand its position in the
+# picture (centred: -0.5 .. 0.5) and its size. 126 + 6 = 132 values per frame.
+NUM_MOTION_FEATURES = NUM_FEATURES + 6           # 132
+WORD_FRAMES = 10                                 # every clip is resampled to 10 frames
+WORD_SECONDS = 1.5                               # length of one word clip
+
+
+def _hand_position(landmarks):
+    pts = np.array([[lm.x, lm.y, lm.z] for lm in landmarks], dtype=np.float32)
+    size = float(np.max(np.abs(pts - pts[0])))
+    return [pts[0][0] - 0.5, pts[0][1] - 0.5, size]
+
+
+def extract_motion_features(result):
+    """132 values for one frame: [left shape 63, right shape 63,
+    left wrist x, y, size, right wrist x, y, size] (zeros for a missing hand)."""
+    shape, n = extract_features(result)
+    left_pos, right_pos = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+    for landmarks, handedness in zip(result.hand_landmarks or [], result.handedness or []):
+        if handedness[0].category_name == "Left":
+            left_pos = _hand_position(landmarks)
+        else:
+            right_pos = _hand_position(landmarks)
+    return np.concatenate([shape, np.array(left_pos + right_pos, dtype=np.float32)]), n
+
+
+def resample_clip(times, frames, n=WORD_FRAMES):
+    """Pick n frames evenly spread over the clip's time (works at any camera speed)."""
+    times = np.asarray(times, dtype=np.float64)
+    targets = np.linspace(times[0], times[-1], n)
+    idx = [int(np.argmin(np.abs(times - t))) for t in targets]
+    return np.concatenate([frames[i] for i in idx]).astype(np.float32)
+
+
 def draw_hands(frame_bgr, result):
     """Draw the hand skeleton on the frame (in place)."""
     h, w = frame_bgr.shape[:2]

@@ -22,6 +22,13 @@ DICTIONARY = {
         "stop": "रुको", "go": "जाओ", "come": "आओ", "happy": "खुश", "india": "भारत",
         "ok": "ठीक है", "okay": "ठीक है", "name": "नाम", "i": "मैं", "you": "आप",
         "my": "मेरा", "need": "ज़रूरत", "bye": "अलविदा", "welcome": "स्वागत है",
+        "toilet": "शौचालय", "where": "कहाँ", "deaf": "बधिर", "understand": "समझ", "learn": "सीखना", "family": "परिवार",
+        # quick phrases
+        "i need a doctor": "मुझे डॉक्टर की ज़रूरत है", "please help me": "कृपया मेरी मदद कीजिए",
+        "please call my family": "कृपया मेरे परिवार को फ़ोन कीजिए",
+        "i cannot hear, please write it down": "मुझे सुनाई नहीं देता, कृपया लिखकर बताइए",
+        "i am in pain": "मुझे दर्द हो रहा है", "i need water": "मुझे पानी चाहिए",
+        "where is the toilet?": "शौचालय कहाँ है?", "thank you very much": "बहुत-बहुत धन्यवाद",
     },
     "kn": {
         "hello": "ನಮಸ್ಕಾರ", "hi": "ನಮಸ್ಕಾರ", "thank you": "ಧನ್ಯವಾದಗಳು", "thanks": "ಧನ್ಯವಾದಗಳು",
@@ -34,6 +41,13 @@ DICTIONARY = {
         "stop": "ನಿಲ್ಲಿಸಿ", "go": "ಹೋಗು", "come": "ಬನ್ನಿ", "happy": "ಸಂತೋಷ", "india": "ಭಾರತ",
         "ok": "ಸರಿ", "okay": "ಸರಿ", "name": "ಹೆಸರು", "i": "ನಾನು", "you": "ನೀವು",
         "my": "ನನ್ನ", "need": "ಬೇಕು", "bye": "ಹೋಗಿ ಬನ್ನಿ", "welcome": "ಸ್ವಾಗತ",
+        "toilet": "ಶೌಚಾಲಯ", "where": "ಎಲ್ಲಿ", "deaf": "ಕಿವುಡ", "understand": "ಅರ್ಥ", "learn": "ಕಲಿಯಿರಿ", "family": "ಕುಟುಂಬ",
+        # quick phrases
+        "i need a doctor": "ನನಗೆ ವೈದ್ಯರು ಬೇಕು", "please help me": "ದಯವಿಟ್ಟು ನನಗೆ ಸಹಾಯ ಮಾಡಿ",
+        "please call my family": "ದಯವಿಟ್ಟು ನನ್ನ ಕುಟುಂಬಕ್ಕೆ ಕರೆ ಮಾಡಿ",
+        "i cannot hear, please write it down": "ನನಗೆ ಕಿವಿ ಕೇಳಿಸುವುದಿಲ್ಲ, ದಯವಿಟ್ಟು ಬರೆದು ತೋರಿಸಿ",
+        "i am in pain": "ನನಗೆ ನೋವಾಗುತ್ತಿದೆ", "i need water": "ನನಗೆ ನೀರು ಬೇಕು",
+        "where is the toilet?": "ಶೌಚಾಲಯ ಎಲ್ಲಿದೆ?", "thank you very much": "ತುಂಬಾ ಧನ್ಯವಾದಗಳು",
     },
     "te": {
         "hello": "నమస్కారం", "hi": "నమస్కారం", "thank you": "ధన్యవాదాలు", "thanks": "ధన్యవాదాలు",
@@ -46,6 +60,13 @@ DICTIONARY = {
         "stop": "ఆపండి", "go": "వెళ్ళు", "come": "రండి", "happy": "సంతోషం", "india": "భారతదేశం",
         "ok": "సరే", "okay": "సరే", "name": "పేరు", "i": "నేను", "you": "మీరు",
         "my": "నా", "need": "కావాలి", "bye": "వెళ్ళొస్తాను", "welcome": "స్వాగతం",
+        "toilet": "మరుగుదొడ్డి", "where": "ఎక్కడ", "deaf": "చెవిటి", "understand": "అర్థం", "learn": "నేర్చుకోండి", "family": "కుటుంబం",
+        # quick phrases
+        "i need a doctor": "నాకు డాక్టర్ కావాలి", "please help me": "దయచేసి నాకు సహాయం చేయండి",
+        "please call my family": "దయచేసి నా కుటుంబానికి ఫోన్ చేయండి",
+        "i cannot hear, please write it down": "నాకు వినిపించదు, దయచేసి రాసి చూపించండి",
+        "i am in pain": "నాకు నొప్పిగా ఉంది", "i need water": "నాకు నీళ్ళు కావాలి",
+        "where is the toilet?": "మరుగుదొడ్డి ఎక్కడ ఉంది?", "thank you very much": "చాలా ధన్యవాదాలు",
     },
 }
 
@@ -86,10 +107,18 @@ def translate(text, lang):
     if out:
         return out, "online translator"
 
-    words = text.split()                            # 4) word by word, unknown stays English
-    translated = [d.get(w, w) for w in words]
-    if any(t != w for t, w in zip(translated, words)):
-        return " ".join(translated), "offline dictionary (partial)"
+    words = text.split()                            # 4) longest known phrase first, unknown stays English
+    out, i = [], 0
+    while i < len(words):
+        for n in range(min(4, len(words) - i), 0, -1):
+            phrase = " ".join(words[i:i + n])
+            if phrase in d:
+                out.append(d[phrase]); i += n
+                break
+        else:
+            out.append(words[i]); i += 1
+    if out != words:
+        return " ".join(out), "offline dictionary (partial)"
     return text, "untranslated"
 
 
