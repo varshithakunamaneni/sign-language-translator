@@ -58,6 +58,13 @@
   .ring .letter { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
                   font-size:calc(58px * var(--fs)); font-weight:700; color:var(--acc2); font-family:"Fraunces", serif; }
   .ring .letter.low { color:var(--muted); }
+  .stopcam { position:absolute; top:14px; right:14px; z-index:6; display:none; align-items:center; gap:6px;
+             padding:8px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.35);
+             background:rgba(24,23,27,.72); color:#F4F2EE; font:inherit; font-weight:700; cursor:pointer;
+             font-size:calc(15px * var(--fs)); backdrop-filter:blur(4px); }
+  .stopcam:hover { background:rgba(24,23,27,.9); }
+  .stopcam .sq { width:11px; height:11px; border-radius:2px; background:#E7A3C3; }
+  body.hc .stopcam { background:#000; border-color:#FFD400; }
   .chip { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:flex; align-items:center;
           gap:8px; padding:8px 16px; border-radius:999px; background:rgba(19,18,22,.9); border:1px solid var(--line);
           font-weight:700; font-size:calc(16px * var(--fs)); white-space:nowrap; transition:border-color .25s, color .25s; }
@@ -229,6 +236,7 @@
       </div>
       <div class="toast" id="toast" aria-hidden="true"></div>
       <div class="chip" id="chip" style="display:none" role="status" aria-live="polite"></div>
+      <button class="stopcam" id="stopBtn" aria-label="Stop camera"><span class="sq" aria-hidden="true"></span>Stop camera</button>
       <div class="center" id="startPanel">
         <div class="bigicon" aria-hidden="true"><span class="wave"><svg class="i"><use href="#i-hand"/></svg></span></div>
         <div style="font-size:calc(26px * var(--fs)); font-weight:700; font-family:'Fraunces', serif">Talk with your hands</div>
@@ -608,6 +616,7 @@ function chip(html, good) {
 }
 
 // ---- Camera + MediaPipe ----
+let camStream = null, camLandmarker = null, camGen = 0;
 $("startBtn").onclick = async () => {
   $("startBtn").disabled = true; $("startBtn").classList.remove("pulse");
   try {
@@ -616,30 +625,47 @@ $("startBtn").onclick = async () => {
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
     const files = await FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-    const landmarker = await HandLandmarker.createFromOptions(files, {
+    const landmarker = camLandmarker || await HandLandmarker.createFromOptions(files, {
       baseOptions: { modelAssetPath:
         "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task" },
       runningMode: "VIDEO", numHands: 2,
       minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
     });
     $("loadStatus").textContent = "Please allow the camera.";
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
+    camLandmarker = landmarker;
+    const stream = camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
     const video = document.createElement("video");
     video.srcObject = stream; video.playsInline = true; video.muted = true;
     await video.play();
     canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
     $("startPanel").style.display = "none";
     $("ring").style.display = "block"; $("chip").style.display = "flex";
+    $("stopBtn").style.display = "flex"; $("loadStatus").textContent = "";
     started = true; render();
-    loop(video, landmarker);
+    loop(video, landmarker, ++camGen);
   } catch (e) {
     $("startBtn").disabled = false; $("startBtn").classList.add("pulse");
     $("loadStatus").textContent = "Camera did not start. Allow the camera in the browser bar and check the internet, then try again.";
   }
 };
 
+// ---- Stop camera: turns the webcam light off; your text stays ----
+$("stopBtn").onclick = () => {
+  camGen++;                                // ends the drawing loop
+  if (camStream) camStream.getTracks().forEach(t => t.stop());
+  camStream = null;
+  $("stopBtn").style.display = "none"; $("ring").style.display = "none"; $("chip").style.display = "none";
+  $("startPanel").style.display = "flex";
+  $("startBtn").disabled = false; $("startBtn").classList.add("pulse");
+  $("startBtn").lastChild.textContent = "Start camera again";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  wordBuf.length = 0; wordStreak = 0; lastChip = "";
+  started = false; render();
+};
+
 let lastTs = -1, frames = 0, fpsT = performance.now(), shownLetter = "";
-function loop(video, landmarker) {
+function loop(video, landmarker, gen) {
+  if (gen !== camGen) return;            // camera was stopped (or restarted)
   // Mirror the frame BEFORE detection - exactly like cv2.flip(frame, 1) during data collection
   ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -666,7 +692,7 @@ function loop(video, landmarker) {
     $("ringP").style.strokeDashoffset = RING * (1 - wordStep(ts, lms, hand));
     frames++;
     if (ts - fpsT > 1000) { $("fps").textContent = `Speed: ${frames} frames per second · word model accuracy ${(WORDS.test_accuracy * 100).toFixed(1)}%`; frames = 0; fpsT = ts; }
-    requestAnimationFrame(() => loop(video, landmarker));
+    requestAnimationFrame(() => loop(video, landmarker, gen));
     return;
   }
 
@@ -699,7 +725,7 @@ function loop(video, landmarker) {
 
   frames++;
   if (ts - fpsT > 1000) { $("fps").textContent = `Speed: ${frames} frames per second · model accuracy ${(MODEL.test_accuracy * 100).toFixed(1)}%`; frames = 0; fpsT = ts; }
-  requestAnimationFrame(() => loop(video, landmarker));
+  requestAnimationFrame(() => loop(video, landmarker, gen));
 }
 render();
 </script>

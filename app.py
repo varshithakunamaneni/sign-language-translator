@@ -330,6 +330,65 @@ def embed(html, height):
 
 
 
+# Photo-mode self-timer: counts down on top of the camera, then presses Streamlit's "Take Photo" button
+PHOTO_TIMER = r"""
+<style>
+  html, body { margin:0; background:transparent; font-family:"Source Sans Pro","Source Sans 3",system-ui,sans-serif; }
+  button { font:inherit; font-weight:700; font-size:16px; padding:9px 18px; border-radius:999px; cursor:pointer;
+           border:1px solid var(--a); background:var(--a); color:var(--o); display:inline-flex; gap:8px; align-items:center; }
+  button[disabled] { opacity:.6; cursor:default; }
+  span { color:var(--t); font-size:14px; margin-left:10px; }
+</style>
+<button id="go">⏱ Start __SECS__-second timer</button><span id="msg">Then get ready and hold your sign.</span>
+<script>
+const P = window.parent.document, SECS = __SECS__;
+function colours() {
+  let l = false;
+  try { const m = getComputedStyle(P.querySelector('.stApp')).backgroundColor.match(/\d+/g).map(Number);
+        l = (0.299*m[0] + 0.587*m[1] + 0.114*m[2]) > 140; } catch (e) {}
+  const r = document.documentElement.style;
+  r.setProperty('--t', l ? '#26222A' : '#F4F2EE'); r.setProperty('--a', l ? '#935073' : '#F6DBC0');
+  r.setProperty('--o', l ? '#FFFFFF' : '#2A1A2E');
+}
+colours(); setInterval(colours, 500);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const camBtn = () => P.querySelector('[data-testid="stCameraInputButton"]');
+function overlay() {
+  const box = P.querySelector('[data-testid="stCameraInputWebcamStyledBox"]') || P.querySelector('[data-testid="stCameraInput"]');
+  if (!box) return null;
+  box.style.position = 'relative';
+  let o = box.querySelector('.ss-count');
+  if (!o) {
+    o = P.createElement('div'); o.className = 'ss-count';
+    o.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+      'pointer-events:none;z-index:5;font:800 120px/1 system-ui,sans-serif;color:#fff;' +
+      'text-shadow:0 4px 24px rgba(0,0,0,.6);transition:transform .25s ease, opacity .25s ease;';
+    box.appendChild(o);
+  }
+  return o;
+}
+document.getElementById('go').onclick = async () => {
+  const go = document.getElementById('go'), msg = document.getElementById('msg');
+  let b = camBtn();
+  if (!b) { msg.textContent = 'Allow the camera first, then try again.'; return; }
+  go.disabled = true;
+  if (/clear/i.test(b.textContent)) { b.click(); await sleep(1500); }      // remove the old photo first
+  for (let s = SECS; s > 0; s--) {
+    const o = overlay(); msg.textContent = 'Photo in ' + s + '…';
+    if (o) { o.textContent = s; o.style.opacity = 1; o.style.transform = 'scale(1.15)';
+             setTimeout(() => { o.style.transform = 'scale(1)'; }, 250); }
+    await sleep(1000);
+  }
+  const o = overlay(); if (o) { o.textContent = ''; }
+  b = camBtn();
+  if (b && !/clear/i.test(b.textContent)) { b.click(); msg.textContent = 'Photo taken!'; }
+  else msg.textContent = 'Could not take the photo. Press "Take Photo" yourself.';
+  go.disabled = false;
+};
+</script>
+"""
+
+
 metrics = load_metrics()
 best_name = metrics.get("best_model")
 test_acc = metrics.get("test_split", {}).get(best_name, {}).get("accuracy")
@@ -450,6 +509,11 @@ with tab_photo:
         source = st.radio("Input", ["Camera", "Upload a photo"], horizontal=True,
                           label_visibility="collapsed")
         if source == "Camera":
+            timer_secs = st.segmented_control(
+                "Self-timer", ["Off", "3 s", "5 s", "10 s"], default="Off", key="photo_timer",
+                help="Gives you time to get your hands ready before the photo is taken.")
+            if timer_secs and timer_secs != "Off":
+                embed(PHOTO_TIMER.replace("__SECS__", timer_secs.split()[0]), 52)
             img_file = st.camera_input("Show one ISL sign, then take a photo")
         else:
             img_file = st.file_uploader("Upload a photo of an ISL sign", type=["jpg", "jpeg", "png"])
