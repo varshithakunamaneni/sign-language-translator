@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 import sys
 
 import cv2
@@ -30,6 +31,7 @@ LIVE_HTML_FILE = os.path.join(ROOT, "web", "live.html")
 WORDS_MODEL_FILE = os.path.join(ROOT, "models", "words_web_model.json")
 REPLY_HTML_FILE = os.path.join(ROOT, "web", "reply.html")
 SIGNS_DIR = os.path.join(ROOT, "web", "signs")
+WORD_SIGNS_DIR = os.path.join(ROOT, "web", "word_signs")
 
 LANGUAGES = {  # name -> (gTTS language code, translation code)
     "English": ("en", None),
@@ -124,6 +126,11 @@ st.markdown(f"""
   .footer {{ margin-top:30px; padding:16px 4px; border-top:1px solid rgba(128,128,128,.25); opacity:.75;
              font-size:{0.92 * FS}rem; }}
   [data-testid="stCameraInput"] {{ border-radius:14px; overflow:hidden; }}
+  .sgrid {{ display:grid; gap:12px; margin-top:6px; }}
+  .sgrid figure {{ margin:0; text-align:center; }}
+  .sgrid img {{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; display:block;
+               background:rgba(128,128,128,.12); }}
+  .sgrid figcaption {{ font-weight:800; margin-top:4px; font-size:{0.95 * FS}rem; }}
 
   @keyframes rise {{ from {{ opacity:0; transform:translateY(16px); }} to {{ opacity:1; transform:none; }} }}
   @keyframes wave {{ 0%,60%,100% {{ transform:rotate(0); }} 10%,30% {{ transform:rotate(-16deg); }} 20%,40% {{ transform:rotate(12deg); }} }}
@@ -258,18 +265,58 @@ def add_text(s):
     st.session_state.sentence += s
 
 
-def show_alphabet():
-    """Grid of our team's photos of each ISL letter, so anyone can try the demo."""
-    st.caption("New to Indian Sign Language? Copy these signs in front of the camera. Start with an easy word like HI.")
-    files = sorted(f for f in os.listdir(SIGNS_DIR) if f[0].isalpha() and f.lower().endswith((".jpg", ".png"))) \
-        if os.path.isdir(SIGNS_DIR) else []
+STATIC_DIR = os.path.join(ROOT, "static")      # served at app/static/... (enableStaticServing in config.toml)
+
+
+def sync_static():
+    """Copy the guide images into ./static so the browser loads them as plain, cacheable files.
+    (Streamlit's st.image can drop some images when many load at once on Streamlit Cloud.)"""
+    for src, sub in ((SIGNS_DIR, "signs"), (WORD_SIGNS_DIR, "word_signs")):
+        if not os.path.isdir(src):
+            continue
+        dst = os.path.join(STATIC_DIR, sub)
+        try:
+            os.makedirs(dst, exist_ok=True)
+            for name in os.listdir(src):
+                s, d = os.path.join(src, name), os.path.join(dst, name)
+                if not os.path.exists(d) or os.path.getmtime(d) < os.path.getmtime(s):
+                    shutil.copy2(s, d)
+        except OSError:
+            pass                                 # read-only server: use the copies already in the repo
+
+
+def image_grid(sub, exts, min_px, label):
+    """Grid of images from static/<sub>; returns False if there are none."""
+    folder = os.path.join(STATIC_DIR, sub)
+    files = sorted(f for f in os.listdir(folder) if f[0].isalpha() and f.lower().endswith(exts)) \
+        if os.path.isdir(folder) else []
     if not files:
+        return False
+    cells = "".join(
+        f'<figure><img src="app/static/{sub}/{f}?v={os.path.getmtime(os.path.join(folder, f)):.0f}" '
+        f'alt="ISL sign for {label(f)}" loading="lazy"><figcaption>{label(f)}</figcaption></figure>'
+        for f in files)
+    st.markdown(f'<div class="sgrid" style="grid-template-columns:repeat(auto-fill,minmax({min_px}px,1fr))">'
+                f'{cells}</div>', unsafe_allow_html=True)
+    return True
+
+
+def show_alphabet():
+    """Our team's photos of each ISL letter, so anyone can try the demo."""
+    st.caption("New to Indian Sign Language? Copy these signs in front of the camera. Start with an easy word like HI.")
+    if not image_grid("signs", (".jpg", ".png"), 92, lambda f: os.path.splitext(f)[0].upper()):
         st.info("Sign photos not added yet (run: python src/capture_signs.py).")
-        return
-    for i in range(0, len(files), 9):
-        cols = st.columns(9)
-        for col, name in zip(cols, files[i:i + 9]):
-            col.image(os.path.join(SIGNS_DIR, name), caption=os.path.splitext(name)[0].upper(), width="stretch")
+
+
+def show_word_signs():
+    """Looping GIFs of our team signing each word, so anyone can copy them."""
+    st.caption("Watch the loop, then copy it on the Translate tab in Words mode. "
+               "Start with your hands down, do the whole sign once, then lower your hands.")
+    if not image_grid("word_signs", (".gif",), 130, lambda f: os.path.splitext(f)[0].replace("_", " ")):
+        st.info("Word-sign GIFs not added yet (run: python src/capture_word_gifs.py).")
+
+
+sync_static()
 
 
 # ---------------- Header ----------------
@@ -374,8 +421,11 @@ tab_live, tab_reply, tab_photo, tab_how, tab_results = st.tabs(
 
 # ---------------- Live ----------------
 with tab_live:
-    with st.expander("Don't know ISL? Show the alphabet"):
+    g1, g2 = st.columns(2)
+    with g1.expander("Don't know ISL? Show the alphabet"):
         show_alphabet()
+    with g2.expander("Show the word signs (moving)"):
+        show_word_signs()
     body_class = " ".join(c for c, on in (("large", LARGE), ("hc", HC)) if on)
     stamp = "".join(f"{os.path.getmtime(f):.0f}" for f in (WEB_MODEL_FILE, WORDS_MODEL_FILE, LIVE_HTML_FILE)
                     if os.path.exists(f))
@@ -495,6 +545,8 @@ with tab_how:
                      unsafe_allow_html=True)
     st.markdown("### ISL alphabet guide")
     show_alphabet()
+    st.markdown("### Word signs guide")
+    show_word_signs()
     st.markdown("### Limitations and responsible use")
     st.markdown("- **Not a certified interpreter.** It can make mistakes. For medical, legal or emergency situations, "
                 "use a professional ISL interpreter or call **112**.\n"

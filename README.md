@@ -6,7 +6,7 @@
 
 🔗 **Live demo:** **https://signspeak-isl.streamlit.app**
 🎬 **Demo video:** [TEAM: paste your video link]
-✋ **Don't know ISL?** Use our [alphabet chart](#-try-it-yourself-isl-alphabet) to try the live demo.
+✋ **Don't know ISL?** Use our [alphabet chart and word-sign GIFs](#-try-it-yourself-isl-alphabet) to try the live demo.
 
 ![SignSpeak demo](assets/screenshots/demo.gif)
 
@@ -182,12 +182,14 @@ sign-language-translator/
 ├── web/
 │   ├── live.html              # Real-time translator (letters + words) running our models in the browser
 │   ├── reply.html             # Two-way conversation: speech → captions + ISL slideshow
-│   └── signs/                 # Our photos of each ISL letter (A.jpg … Z.jpg)
+│   ├── signs/                 # Our photos of each ISL letter (A.jpg … Z.jpg)
+│   └── word_signs/            # Looping GIFs of each word sign (HELLO.gif …)
 ├── src/
 │   ├── utils.py               # Hand detection + feature extraction (letters and words)
 │   ├── collect_data.py        # Record letter samples
 │   ├── collect_words.py       # Record word-sign clips
 │   ├── capture_signs.py       # Photograph each ISL letter for the Reply tab
+│   ├── capture_word_gifs.py   # Record a looping GIF of each word sign (guide for new users)
 │   ├── fix_names.py           # Fix signer names in the dataset
 │   ├── train.py               # Train letters, compare models, unseen-signer test
 │   ├── train_words.py         # Train words, unseen-signer test, export for browser
@@ -267,6 +269,15 @@ Don't know ISL? Copy these signs (photographed by our team) in front of the came
 | <img src="web/signs/A.jpg" width="72" alt="ISL sign for A"><br><b>A</b> | <img src="web/signs/B.jpg" width="72" alt="ISL sign for B"><br><b>B</b> | <img src="web/signs/C.jpg" width="72" alt="ISL sign for C"><br><b>C</b> | <img src="web/signs/D.jpg" width="72" alt="ISL sign for D"><br><b>D</b> | <img src="web/signs/E.jpg" width="72" alt="ISL sign for E"><br><b>E</b> | <img src="web/signs/F.jpg" width="72" alt="ISL sign for F"><br><b>F</b> | <img src="web/signs/G.jpg" width="72" alt="ISL sign for G"><br><b>G</b> | <img src="web/signs/H.jpg" width="72" alt="ISL sign for H"><br><b>H</b> | <img src="web/signs/I.jpg" width="72" alt="ISL sign for I"><br><b>I</b> |
 | <img src="web/signs/J.jpg" width="72" alt="ISL sign for J"><br><b>J</b> | <img src="web/signs/K.jpg" width="72" alt="ISL sign for K"><br><b>K</b> | <img src="web/signs/L.jpg" width="72" alt="ISL sign for L"><br><b>L</b> | <img src="web/signs/M.jpg" width="72" alt="ISL sign for M"><br><b>M</b> | <img src="web/signs/N.jpg" width="72" alt="ISL sign for N"><br><b>N</b> | <img src="web/signs/O.jpg" width="72" alt="ISL sign for O"><br><b>O</b> | <img src="web/signs/P.jpg" width="72" alt="ISL sign for P"><br><b>P</b> | <img src="web/signs/Q.jpg" width="72" alt="ISL sign for Q"><br><b>Q</b> | <img src="web/signs/R.jpg" width="72" alt="ISL sign for R"><br><b>R</b> |
 | <img src="web/signs/S.jpg" width="72" alt="ISL sign for S"><br><b>S</b> | <img src="web/signs/T.jpg" width="72" alt="ISL sign for T"><br><b>T</b> | <img src="web/signs/U.jpg" width="72" alt="ISL sign for U"><br><b>U</b> | <img src="web/signs/V.jpg" width="72" alt="ISL sign for V"><br><b>V</b> | <img src="web/signs/W.jpg" width="72" alt="ISL sign for W"><br><b>W</b> | <img src="web/signs/X.jpg" width="72" alt="ISL sign for X"><br><b>X</b> | <img src="web/signs/Y.jpg" width="72" alt="ISL sign for Y"><br><b>Y</b> | <img src="web/signs/Z.jpg" width="72" alt="ISL sign for Z"><br><b>Z</b> |
+
+### Word signs (they move: watch the loop)
+Switch the **Translate** tab to **Words**, start with your hands down, copy the whole movement once, then lower your hands. These are recorded by the same team member whose recordings trained the word model.
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+| <img src="web/word_signs/HELLO.gif" width="120" alt="ISL sign for HELLO"><br><b>HELLO</b> | <img src="web/word_signs/THANK_YOU.gif" width="120" alt="ISL sign for THANK YOU"><br><b>THANK YOU</b> | <img src="web/word_signs/PLEASE.gif" width="120" alt="ISL sign for PLEASE"><br><b>PLEASE</b> | <img src="web/word_signs/YES.gif" width="120" alt="ISL sign for YES"><br><b>YES</b> | <img src="web/word_signs/NO.gif" width="120" alt="ISL sign for NO"><br><b>NO</b> |
+| <img src="web/word_signs/HELP.gif" width="120" alt="ISL sign for HELP"><br><b>HELP</b> | <img src="web/word_signs/DOCTOR.gif" width="120" alt="ISL sign for DOCTOR"><br><b>DOCTOR</b> | <img src="web/word_signs/PAIN.gif" width="120" alt="ISL sign for PAIN"><br><b>PAIN</b> | <img src="web/word_signs/WATER.gif" width="120" alt="ISL sign for WATER"><br><b>WATER</b> | <img src="web/word_signs/TOILET.gif" width="120" alt="ISL sign for TOILET"><br><b>TOILET</b> |
+| <img src="web/word_signs/WHERE.gif" width="120" alt="ISL sign for WHERE"><br><b>WHERE</b> | <img src="web/word_signs/FAMILY.gif" width="120" alt="ISL sign for FAMILY"><br><b>FAMILY</b> | <img src="web/word_signs/NAME.gif" width="120" alt="ISL sign for NAME"><br><b>NAME</b> | <img src="web/word_signs/DEAF.gif" width="120" alt="ISL sign for DEAF"><br><b>DEAF</b> |   |
 
 ---
 

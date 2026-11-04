@@ -17,3 +17,5 @@ textColor = "#F4F2EE"
 # (e.g. Safari) because of this check. Our app has no logins or private data, so it is safe to turn off.
 enableXsrfProtection = false
 maxUploadSize = 10
+# Serve ./static as plain files (sign photos and word GIFs load reliably and are cached)
+enableStaticServing = true
