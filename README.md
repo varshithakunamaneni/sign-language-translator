@@ -8,7 +8,7 @@
 🎬 **Demo video:** [TEAM: paste your video link]
 ✋ **Don't know ISL?** Use our [alphabet chart and word-sign GIFs](#-try-it-yourself-isl-alphabet) to try the live demo.
 
-![SignSpeak demo](assets/screenshots/demo.gif)
+![SignSpeak translating ISL letters live](assets/screenshots/letters.png)
 
 ---
 
@@ -45,12 +45,15 @@ Everyday moments become hard: explaining pain to a doctor, asking for help in an
 - 👋 **Words mode:** 14 whole-word gestures (HELLO, THANK YOU, PLEASE, YES, NO, HELP, DOCTOR, PAIN, WATER, TOILET, WHERE, FAMILY, NAME, DEAF), recognised from **hand movement over time**.
 - 💬 **Reply tab (two-way conversation):** speech-to-text with large captions and an **ISL sign slideshow** built from photos of our team signing each letter.
 - 🔊 **Speech in 4 languages** with an **offline dictionary**, so common and emergency words translate even without internet.
+- ⏹️ **Stop camera** button: turns the webcam off at any time; the text you signed stays.
+- 📚 **Built-in sign guide:** photos of every letter and looping GIFs of every word sign, recorded by our team, inside the app.
 - ⚡ **Auto-speak** (optional): speaks each word as soon as it is finished.
 - 🎚️ **Word sensitivity** (Strict / Normal / Easy) to balance responsiveness against false detections.
 - 🧠 **Stability smoothing:** a letter is accepted only after it is predicted consistently for about 1 second, and a progress ring shows the user to "keep holding".
 - 🫱 **Left-handed signer support** through mirror augmentation.
 - ♿ **Accessible design:** Day / Night modes, bigger text, high-contrast mode, keyboard shortcuts, screen-reader labels, icons plus words (never colour alone), and a visual flash instead of sound when a letter is added.
-- 📷 **Photo mode** (backup for any device) and a 🖥️ **desktop app** (OpenCV).
+- 📷 **Photo mode** (backup for any device): take a photo or upload one; a **self-timer** (3 / 5 / 10 s) gives the signer time to get their hands ready, and the top-3 guesses are shown with confidence. Speech uses Google voices, so all 4 languages work even on devices without Hindi, Kannada or Telugu voices.
+- 🖥️ **Desktop app** (OpenCV) for offline use.
 
 ---
 
@@ -184,6 +187,7 @@ sign-language-translator/
 │   ├── reply.html             # Two-way conversation: speech → captions + ISL slideshow
 │   ├── signs/                 # Our photos of each ISL letter (A.jpg … Z.jpg)
 │   └── word_signs/            # Looping GIFs of each word sign (HELLO.gif …)
+├── static/                    # Copies of the sign photos/GIFs served as plain files by the web app
 ├── src/
 │   ├── utils.py               # Hand detection + feature extraction (letters and words)
 │   ├── collect_data.py        # Record letter samples
